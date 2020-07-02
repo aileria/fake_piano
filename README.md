@@ -1,4 +1,4 @@
-# false_chopin
+# fake_piano
 Interpreta piezas musicales almacenadas como archivos MIDI con un piano digital, sin saber cómo usarlo.
 ## Por qué
 Sí.
