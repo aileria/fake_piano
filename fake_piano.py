@@ -42,11 +42,16 @@ while note_crit<0:
 fs.noteon(0, 60, 60)
 len_off_seq = len(noteoff_seq)
 len_on_seq = len(noteon_seq)
+threshold = 0  # Time threshold
 while True:
     message, delta_time = midi_in.get_message()
     if message[0] == 144:
         if message[1] >= note_crit:
-            print(message)
+
+            if delta_time < threshold:  # message is simultaneous note
+                continue
+
+            print(message)  # message is not simultaneous note
             if message[2] == 0: # noteoff
                 if len_off_seq > 0:
                     fs.noteoff(0, noteoff_seq.pop(0))
