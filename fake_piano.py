@@ -37,17 +37,41 @@ for msg in rhand_track:         # create sequences
     elif msg.type == 'note_off':
         noteoff_seq.insert(0, msg.note)
 
+# Set breakpoint note
+note_crit = -1
+print('Enter breakpoint note:')
+while note_crit<0:
+    message, delta_time = midi_in.get_message()
+    if message[0] == 144:
+        note_crit = message.note
+    print("Breakpoint note = "+str(note_crit)+"\n")
+
 # Handle messages
 fs.noteon(0, 60, 60)
+len_off_seq = len(noteoff_seq)
+len_on_seq = len(noteon_seq)
+threshold = 0  # Time threshold
 while True:
     message, delta_time = midi_in.get_message()
+
     if message:
         if message[0] == 144 and len(message) >= 3:     # noteon & noteoff
-            print(message)
-            if message[2] == 0: # noteoff
-                fs.noteoff(0, noteoff_seq.pop())
-            else: # noteon
-                fs.noteon(0, noteon_seq.pop(), message[2])
+            if message[1] >= note_crit:
+
+                if delta_time < threshold:  # message is simultaneous note
+                    continue
+
+                print(message)   # debug
+
+                # message is not simultaneous note
+                if message[2] == 0: # noteoff
+                    if len_off_seq > 0:
+                        fs.noteoff(0, noteoff_seq.pop())
+                        len_off_seq = len_off_seq - 1
+                else: # noteon
+                    if len_on_seq > 0:
+                        fs.noteon(0, noteon_seq.pop(), message[2])
+                        len_on_seq = len_on_seq - 1
 
         elif message[0] == 176:                         # sustain
             fs.cc(0, message[1], message[2])
