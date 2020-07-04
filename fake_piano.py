@@ -42,9 +42,10 @@ note_crit = -1
 print('Enter breakpoint note:')
 while note_crit<0:
     message, delta_time = midi_in.get_message()
-    if message[0] == 144:
-        note_crit = message.note
-    print("Breakpoint note = "+str(note_crit)+"\n")
+    if message:
+        if message[0] == 144:
+            note_crit = message[1]
+            print("Breakpoint note = "+str(note_crit)+"\n")
 
 # Handle messages
 fs.noteon(0, 60, 60)
