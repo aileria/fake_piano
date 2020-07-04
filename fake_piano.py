@@ -31,11 +31,36 @@ for track in midi.tracks:       # get right hand track from midi
 else:
     rhand_track = midi
 
+
+
+
+
+threshold = 0  # Time threshold
+index_on = index_off = 0
+tics_on = tics_off = 0 # tics_from reference [on, off]
+
 for msg in rhand_track:         # create sequences
     if msg.type == 'note_on':
-        noteon_seq.insert(0, msg.note)
+        if tics_on + 1 < threshold:   # Notes played at same time
+            noteon_seq.insert(index_on, msg.note)
+            tics_on + 1
+        else:   # Notes played at different time
+            tics_on = 0
+            index_on = index_on+1 
+        
     elif msg.type == 'note_off':
-        noteoff_seq.insert(0, msg.note)
+        if tics_off + 1 < threshold:  
+            noteoff_seq.insert(index_off, msg.note)
+            tics_off + 1
+        else:
+            tics_off = 0
+            index_off = index_off+1
+
+
+del index_on; del index_off
+
+
+
 
 # Set breakpoint note
 note_crit = -1
@@ -50,7 +75,6 @@ while note_crit<0:
 fs.noteon(0, 60, 60)
 len_off_seq = len(noteoff_seq)
 len_on_seq = len(noteon_seq)
-threshold = 0  # Time threshold
 while True:
     message, delta_time = midi_in.get_message()
 
