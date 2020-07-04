@@ -5,7 +5,7 @@ fs = fluidsynth.Synth()
 fs.start(driver='alsa') # linux
 #fs.start(driver='dsound') # windows
 
-sfid = fs.sfload("/home/aitor/Proyectos/fake_piano/soundfonts/FluidR3_GM.sf2")
+sfid = fs.sfload("/home/aitor/Proyectos/fake_piano/soundfonts/FluidR3_GM.SF2")
 fs.program_select(0, sfid, 0, 0)
 
 # Reproducir MIDI
