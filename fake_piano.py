@@ -31,11 +31,32 @@ for track in midi.tracks:       # get right hand track from midi
 else:
     rhand_track = midi
 
+
+threshold = 0   # Time threshold
+tics_on = 0     # tics_from reference on
+tics_off = 0    # tics_from reference off
+aux_on = []
+aux_off = []
+
 for msg in rhand_track:         # create sequences
     if msg.type == 'note_on':
-        noteon_seq.insert(0, msg.note)
+        if tics_on + msg.time < threshold:      # Notes played at same time
+            aux_on.append(msg.note)
+            tics_on = tics_on + msg.time
+        else:                                   # Notes played at different time
+            noteon_seq.insert(0, aux_on)
+            tics_on = 0
+            aux_on.clear()
+        
     elif msg.type == 'note_off':
-        noteoff_seq.insert(0, msg.note)
+        if tics_off + msg.time < threshold:  
+            aux_off.append(msg.note)
+            tics_off = tics_off + msg.time
+        else:
+            noteoff_seq.insert(0, aux_off)
+            tics_off = 0
+            aux_off.clear()
+
 
 # Set breakpoint note
 note_crit = -1
@@ -51,7 +72,6 @@ while note_crit<0:
 fs.noteon(0, 60, 60)
 len_off_seq = len(noteoff_seq)
 len_on_seq = len(noteon_seq)
-threshold = 0  # Time threshold
 while True:
     message, delta_time = midi_in.get_message()
 
@@ -67,11 +87,13 @@ while True:
                 # message is not simultaneous note
                 if message[2] == 0: # noteoff
                     if len_off_seq > 0:
-                        fs.noteoff(0, noteoff_seq.pop())
+                        for note in noteoff_seq.pop():
+                            fs.noteoff(0, note)
                         len_off_seq = len_off_seq - 1
                 else: # noteon
                     if len_on_seq > 0:
-                        fs.noteon(0, noteon_seq.pop(), message[2])
+                        for note in noteon_seq.pop():
+                            fs.noteon(0, note, message[2])  # TODO: check multiple note velocity
                         len_on_seq = len_on_seq - 1
 
         elif message[0] == 176:                         # sustain
