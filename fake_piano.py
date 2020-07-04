@@ -32,34 +32,30 @@ else:
     rhand_track = midi
 
 
-
-
-
-threshold = 0  # Time threshold
-index_on = index_off = 0
-tics_on = tics_off = 0 # tics_from reference [on, off]
+threshold = 0   # Time threshold
+tics_on = 0     # tics_from reference on
+tics_off = 0    # tics_from reference off
+aux_on = []
+aux_off = []
 
 for msg in rhand_track:         # create sequences
     if msg.type == 'note_on':
-        if tics_on + 1 < threshold:   # Notes played at same time
-            noteon_seq.insert(index_on, msg.note)
-            tics_on + 1
-        else:   # Notes played at different time
+        if tics_on + msg.time < threshold:      # Notes played at same time
+            aux_on.append(msg.note)
+            tics_on = tics_on + msg.time
+        else:                                   # Notes played at different time
+            noteon_seq.insert(0, aux_on)
             tics_on = 0
-            index_on = index_on+1 
+            aux_on.clear()
         
     elif msg.type == 'note_off':
-        if tics_off + 1 < threshold:  
-            noteoff_seq.insert(index_off, msg.note)
-            tics_off + 1
+        if tics_off + msg.time < threshold:  
+            aux_off.append(msg.note)
+            tics_off = tics_off + msg.time
         else:
+            noteoff_seq.insert(0, aux_off)
             tics_off = 0
-            index_off = index_off+1
-
-
-del index_on; del index_off
-
-
+            aux_off.clear()
 
 
 # Set breakpoint note
@@ -90,11 +86,13 @@ while True:
                 # message is not simultaneous note
                 if message[2] == 0: # noteoff
                     if len_off_seq > 0:
-                        fs.noteoff(0, noteoff_seq.pop())
+                        for note in noteoff_seq.pop():
+                            fs.noteoff(0, note)
                         len_off_seq = len_off_seq - 1
                 else: # noteon
                     if len_on_seq > 0:
-                        fs.noteon(0, noteon_seq.pop(), message[2])
+                        for note in noteon_seq.pop():
+                            fs.noteon(0, note, message[2])  # TODO: check multiple note velocity
                         len_on_seq = len_on_seq - 1
 
         elif message[0] == 176:                         # sustain
