@@ -30,6 +30,12 @@ for msg in midi:
         else: # noteon
             noteon_seq.append(msg.note)
 
+# Create separation note
+message, delta_time = midi_in.get_message()
+if message[0] == 144 :
+    note_crit = message.note
+print("Nota de corte = "+str(note_crit)+"\n")
+
 # Handle messages
 fs.noteon(0, 60, 60)
 while True:
