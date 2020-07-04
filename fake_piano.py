@@ -31,19 +31,27 @@ for msg in midi:
             noteon_seq.append(msg.note)
 
 # Create separation note
-message, delta_time = midi_in.get_message()
-if message[0] == 144 :
-    note_crit = message.note
-print("Nota de corte = "+str(note_crit)+"\n")
+note_crit = -1
+while note_crit<0:
+    message, delta_time = midi_in.get_message()
+    if message[0] == 144:
+        note_crit = message.note
+    print("Nota de corte = "+str(note_crit)+"\n")
 
 # Handle messages
 fs.noteon(0, 60, 60)
+len_off_seq = len(noteoff_seq)
+len_on_seq = len(noteon_seq)
 while True:
     message, delta_time = midi_in.get_message()
-    if message:
-        if message[0] == 144:
+    if message[0] == 144:
+        if message[1] >= note_crit:
             print(message)
             if message[2] == 0: # noteoff
-                fs.noteoff(0, noteoff_seq.pop(0))
+                if len_off_seq > 0:
+                    fs.noteoff(0, noteoff_seq.pop(0))
+                    len_off_seq = len_off_seq - 1
             else: # noteon
-                fs.noteon(0, noteon_seq.pop(0), message[2])
+                if len_on_seq > 0:
+                    fs.noteon(0, noteon_seq.pop(0), message[2])
+                    len_on_seq = len_on_seq - 1
