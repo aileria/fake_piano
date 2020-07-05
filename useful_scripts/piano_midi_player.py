@@ -2,7 +2,7 @@ import mido
 import time
 import fluidsynth
 
-file_path = 'midi_files/concerto_N1.mid'
+file_path = 'midi_files/fur_padre/guardian_faro.mid'
 port_name = 'Digital Piano:Digital Piano MIDI 1 24:0'
 
 # Reproducir MIDI

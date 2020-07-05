@@ -1,9 +1,9 @@
-#Soundfonts
-*.sf2
-*.SF2
 #Logs, temps and info
 *.txt
 *.log
 *.temp
 #Personal directories
 midi_files/
+soundfonts/
+#Temp
+__pycache__/
