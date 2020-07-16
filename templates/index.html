@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+    <button onclick="document.getElementById('file-input').click();">Open</button>
+    <input id="file-input" type="file" name="name" style="display: none;" />
+
+    <a href="/select_midi"><input type="button" value="Select MIDI"></a>
+    <a href="/select_sf2"><input type="button" value="Select SF2"></a>
+    <a href="/settings"><input type="button" value="Settings"></a>
+    <a href="/play"><input type="button" value="Play"></a>
+</body>
+</html>
