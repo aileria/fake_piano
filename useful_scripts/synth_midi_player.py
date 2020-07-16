@@ -1,10 +1,12 @@
 import mido, fluidsynth
 
-def main(midi, driver='alsa'):
+#TODO: make this an object (set volume dynamically with cc(0,7,vol))
+
+def main(midi, driver='alsa', gain=2):
     """Plays midi file in the computer. Driver 'alsa' for linux, 'dsound' for windows"""
 
     # Inicializar sintetizador
-    fs = fluidsynth.Synth()
+    fs = fluidsynth.Synth(gain)
     fs.start(driver) # linux
     #fs.start(driver='dsound') # windows
 
