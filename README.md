@@ -1,7 +1,5 @@
 # fake_piano
 Interpreta piezas musicales almacenadas como archivos MIDI con un piano digital, sin saber cómo usarlo.
-## Por qué
-Sí.
 ## Instalación
 ### Requisitos previos
 Los scipts requieren *Pyton 3* para ejecutarse. Además son necesarios ciertos módulos y herramientas para un correcto funcionamiento.
