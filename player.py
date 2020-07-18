@@ -4,13 +4,16 @@ import mido
 import time
 
 class Player:
-    def __init__(self, sf2_path, driver='alsa', channel=0, synth_gain=1, volume=127):
-        # Initialize synth
+    def __init__(self, sf2_path, driver='alsa', channel=0, synth_gain=1, volume=127, input_threshold=0.02):
+        # Synth
         self._synth = fluidsynth.Synth(gain=synth_gain)
         self._synth.start(driver)
         sfid = self._synth.sfload(sf2_path)
         self._synth.program_select(0, sfid, 0, 0)
         self._synth.cc(0, 7, volume)
+        self.breakpoint_note = -1
+        # Threshold
+        self._threshold = input_threshold
     
     @property
     def synth(self):
@@ -21,6 +24,14 @@ class Player:
         if not s:
             raise ValueError("Invalid synth")
         self._synth = s
+
+    @property
+    def threshold(self):
+        return self._threshold
+
+    @threshold.setter
+    def threshold(self, t):
+        self._threshold = t
 
     # MIDI input port
     def available_midi_in(self):
@@ -35,7 +46,7 @@ class Player:
         i = 0
         for port in self.midi_in.ports:
             if port_name in port:
-                midi_in.open_port(i)
+                self.midi_in.open_port(i)
                 break
             i += 1
         else:
@@ -51,7 +62,7 @@ class Player:
 
         return tuple([track.name for track in self.midi.tracks])
 
-    def load_track(self, name):
+    def load_track(self, name, load_threshold=1):
         """Loads the MIDI track which name matches (or contains) the given name"""
 
         if not self.midi:
@@ -65,13 +76,13 @@ class Player:
         
         # Generate sequences from note_on and note_off messages. Every element
         # of each sequence will be a block of notes (to allow chords).
-        threshold = 0.02       # minimum time (tics) between blocks of notes
-        tics_on = 0             # tics from last note_on
-        tics_off = 0            # tics from last note_off
-        aux_on = []             # current block of note_on messages
-        aux_off = []            # current block of note_off messages
-        noteon_seq = []         # final note_on sequence
-        noteoff_seq = []        # final note_off sequence
+        threshold = load_threshold      # minimum time (tics) between blocks of notes
+        tics_on = 0                     # tics from last note_on
+        tics_off = 0                    # tics from last note_off
+        aux_on = []                     # current block of note_on messages
+        aux_off = []                    # current block of note_off messages
+        noteon_seq = []                 # final note_on sequence
+        noteoff_seq = []                # final note_off sequence
 
         for msg in play_track:     # Create sequences from right hand track
 
@@ -116,7 +127,7 @@ class Player:
     
     def read_breakpoint_note(self, time_limit=5):
         """Reads the breakpoint note from the connected MIDI input device"""
-        
+
         breakpoint_note = -1
         print('Enter breakpoint note:')
         start_time = time.perf_counter()
@@ -125,18 +136,22 @@ class Player:
             if time.perf_counter() - start_time >= time_limit:
                 break
             # Read note
-            message, delta_time = midi_in.get_message()
+            message = self.midi_in.get_message()[0]
             if message:
                 if message[0] == 144:
                     breakpoint_note = message[1]
                     print("Breakpoint note = "+str(breakpoint_note)+"\n")
         self.breakpoint_note = breakpoint_note
 
-    def start():
+    # Threshold
+    def set_threshold(self, threshold):
+        self.threshold = threshold
+
+    def start(self):
         """Starts reading and handling MIDI messages"""
         
-        threshold = 0.002       # Minimum time (seconds) between inputs
-        time = 0.0              # Elapsed time between inputs
+        threshold = self._threshold     # Minimum time (seconds) between inputs
+        time = 0.0                      # Elapsed time between inputs
 
         # Error checking
         if not self.noteon_seq:
@@ -160,19 +175,19 @@ class Player:
                     print(message, delta_time)
 
                     # Invalid input
-                    if message[1] < breakpoint_note or time < threshold:
+                    if message[1] < self.breakpoint_note or time < threshold:
                         continue
                     
                     # Valid input
                     time = 0
                     if message[2] == 0:     # noteoff
                         try:
-                            for note in noteoff_seq.pop():
+                            for note in self.noteoff_seq.pop():
                                 self._synth.noteoff(0, note)
                         except: break
                     else:                   # noteon
                         try:
-                            for note in noteon_seq.pop():
+                            for note in self.noteon_seq.pop():
                                 # TODO: check block notes velocity
                                 self._synth.noteon(0, note, message[2])
                         except: pass
@@ -181,12 +196,13 @@ class Player:
                     self._synth.cc(0, message[1], message[2])
 
 if __name__ == '__main__':
-    ply = Player("soundfonts/FluidR3_GM.sf2")
-    ply.load_midi("midi_files/fantaisie.mid")
-    ply.load_track("right_hand")
+    ply = Player("soundfonts/FluidR3_GM.sf2", synth_gain=2)
+    ply.load_midi("midi_files/fur_padre/moonlight_sonata.mid")
+    ply.load_track("right_hand", load_threshold=1)
+    ply.set_threshold(0.002)
     while True:
         try:
-            ply.set_midi_in("Piano")
+            ply.set_midi_in(b'Piano')
             print("Connected")
             break
         except:

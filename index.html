@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="../static/style.css">
+</head>
+<body>
+    <button onclick="document.getElementById('file-input').click();">Select MIDI</button>
+
+    <form action="/uploader" enctype="multipart/form-data" onchange="document.getElementById('submit').click()" method="POST">
+        <input id="file-input" type="file" name="midi_file" style="display: none;"/>
+        <input id="submit" type="submit" style="display: none;"/>
+    </form>
+
+    <a href="/select_midi"><input type="button" value="Select MIDI"></a>
+    <a href="/select_sf2"><input type="button" value="Select SF2"></a>
+    <a href="/settings"><input type="button" value="Settings"></a>
+    <a href="/play"><input type="button" value="Play"></a>
+</body>
+</html>
