@@ -6,34 +6,46 @@
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
-    <button id="midi-button" onclick="document.getElementById('midi-input').click();">Select MIDI</button>
-    <p id="midi-label">
-        {% if 'midi' in session %}
-            {{ session['midi'] }}
-        {% endif %}
-    </p>
+    <div id="selectors">
+        <div class="group">
+            <button id="midi-button" onclick="document.getElementById('midi-input').click();">Select MIDI</button>
+            <p id="midi-label">
+                {% if 'midi' in session %}
+                    {{ session['midi'] }}
+                {% endif %}
+            </p>
+        </div>
 
-    <button id="sf2-button" onclick="document.getElementById('sf2-input').click();">Select SF2</button>
-    <p id="sf2-label">
-        {% if 'sf2' in session %}
-            {{ session['sf2'] }}
-        {% endif %}
-    </p>
+        <div class="group">
+            <button id="sf2-button" onclick="document.getElementById('sf2-input').click();">Select SF2</button>
+            <p id="sf2-label">
+                {% if 'sf2' in session %}
+                    {{ session['sf2'] }}
+                {% endif %}
+            </p>
+        </div>
 
-    <form action="/uploader" enctype="multipart/form-data" onchange="document.getElementById('submit1').click()" method="POST">
-        <input id="midi-input" type="file" name="midi_file" style="display: none;"/>
-        <input id="submit1" type="submit" style="display: none;"/>
-    </form>
-    <form action="/uploader" enctype="multipart/form-data" onchange="document.getElementById('submit2').click()" method="POST">
-        <input id="sf2-input" type="file" name="sf2_file" style="display: none;"/>
-        <input id="submit2" type="submit" style="display: none;"/>
-    </form>
+        <form action="/uploader" enctype="multipart/form-data" onchange="document.getElementById('submit1').click()" method="POST">
+            <input id="midi-input" type="file" name="midi_file" style="display: none;"/>
+            <input id="submit1" type="submit" style="display: none;"/>
+        </form>
+        <form action="/uploader" enctype="multipart/form-data" onchange="document.getElementById('submit2').click()" method="POST">
+            <input id="sf2-input" type="file" name="sf2_file" style="display: none;"/>
+            <input id="submit2" type="submit" style="display: none;"/>
+        </form>
+    </div>
 
-    <a href="/settings"><input type="button" value="Settings"></a>
-    <a href="/play"><input type="button" value="Play"></a>
+    <div id="options">
+        <form>
+            <button formaction="/settings">Settings</button>
+        </form>
+        <form>
+            <button formaction="/play">Play</button>
+        </form>
+    </div>
 
     {% if 'error' in session %}
-        <p>{{ session['error'] }}</p>
+        <p id="error">{{ session['error'] }}</p>
     {% endif %}
 </body>
 </html>

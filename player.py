@@ -14,6 +14,8 @@ class Player:
         self.breakpoint_note = -1
         # Threshold
         self._threshold = input_threshold
+        # Midi input port
+        self.midi_in = None
     
     @property
     def synth(self):
@@ -195,9 +197,12 @@ class Player:
                 elif message[0] == 176:     # sustain
                     self._synth.cc(0, message[1], message[2])
 
+    def stop(self):
+        pass
+
 if __name__ == '__main__':
     ply = Player("soundfonts/FluidR3_GM.sf2", synth_gain=2)
-    ply.load_midi("midi_files/fur_padre/moonlight_sonata.mid")
+    ply.load_midi("midi_files/a_comme_amour.mid")
     ply.load_track("right_hand", load_threshold=1)
     ply.set_threshold(0.002)
     while True:
