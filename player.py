@@ -16,6 +16,8 @@ class Player:
         self._threshold = input_threshold
         # Midi input port
         self.midi_in = None
+        # Active keys list
+        self._active_keys = []
     
     @property
     def synth(self):
@@ -26,6 +28,10 @@ class Player:
         if not s:
             raise ValueError("Invalid synth")
         self._synth = s
+
+    @property
+    def active_keys(self):
+        return self._active_keys
 
     @property
     def threshold(self):
@@ -189,8 +195,10 @@ class Player:
                         except: break
                     else:                   # noteon
                         try:
+                            self.active_keys.clear()
                             for note in self.noteon_seq.pop():
                                 # TODO: check block notes velocity
+                                self.active_keys.append(note)
                                 self._synth.noteon(0, note, message[2])
                         except: pass
 

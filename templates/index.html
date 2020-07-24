@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="stylesheet" href="../static/style.css">
+    <script src="../static/piano.js"></script>
+    <script src="{{ url_for('static', filename='piano.js') }}"></script>
 </head>
 <body>
     <div id="selectors">
@@ -43,6 +45,8 @@
             <button formaction="/play">Play</button>
         </form>
     </div>
+
+    <canvas id="canvas" width="800px" height="100px"></canvas>
 
     {% if 'error' in session %}
         <p id="error">{{ session['error'] }}</p>

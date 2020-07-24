@@ -48,3 +48,9 @@ button {
     padding: 4px;
     background-color: darkkhaki;
 }
+
+canvas {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}

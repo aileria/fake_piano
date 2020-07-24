@@ -1,7 +1,7 @@
 import webview
 import threading
 from multiprocessing import Process
-from flask import Flask, render_template, request, session, url_for
+from flask import Flask, render_template, request, session, url_for, jsonify
 from player import Player
 import os
 
@@ -26,6 +26,13 @@ def dated_url_for(endpoint, **values):
                                  endpoint, filename)
             values['q'] = int(os.stat(file_path).st_mtime)
     return url_for(endpoint, **values)
+
+@app.route('/active_keys')
+def active_keys():
+    if 'player' in session:
+        return jsonify(session['player'].active_keys)
+    else:
+        return jsonify([3,4,5,6,7,8,9,10,11,12,13,14])
 
 @app.route('/play')
 def play():
