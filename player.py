@@ -1,9 +1,21 @@
+import asyncio
+import collections
 import rtmidi_python as rtmidi
 import fluidsynth
 import mido
 import time
+from playable import Playable
+from reader import Reader
+import input_tools
 
 class Player:
+
+    NOTE_ON = 0
+    NOTE_OFF = 1
+    CONTROL = 2
+    SUSTAIN_ON = 3
+    SUSTAIN_OFF = 4
+
     def __init__(self, sf2_path, driver='alsa', channel=0, synth_gain=1, volume=127, input_threshold=0.02):
         # Synth
         self._synth = fluidsynth.Synth(gain=synth_gain)
@@ -15,9 +27,12 @@ class Player:
         # Threshold
         self._threshold = input_threshold
         # Midi input port
-        self.midi_in = None
+        self.midi_in = None 
         # Active keys list
-        self._active_keys = []
+        self._active_notes = {} # {real_note: fake_note}
+
+    def set_playable(self, playable: Playable):
+        self.playable = playable
     
     @property
     def synth(self):
@@ -30,8 +45,8 @@ class Player:
         self._synth = s
 
     @property
-    def active_keys(self):
-        return self._active_keys
+    def active_notes(self):
+        return self._active_notes
 
     @property
     def threshold(self):
@@ -155,62 +170,111 @@ class Player:
     def set_threshold(self, threshold):
         self.threshold = threshold
 
-    def start(self):
-        """Starts reading and handling MIDI messages"""
-        
+    #TODO delete depcrecated method
+    def process_old(self, message, delta_time):
         threshold = self._threshold     # Minimum time (seconds) between inputs
         time = 0.0                      # Elapsed time between inputs
+        
+        # Update time
+        if delta_time:
+            time += delta_time
 
-        # Error checking
-        if not self.noteon_seq:
-            raise Exception("The selected track is empty")
+        # Process message
+        if message:
+            if len(message) >= 3 and message[0] == 144:     # noteon or noteoff
+                # Debug
+                print(message, delta_time)
+
+                # Check if input is valid
+                if message[1] >= self.breakpoint_note and time >= threshold:
+                    time = 0
+                    real_note = message[1]
+
+                    # noteoff
+                    if message[2] == 0:
+                        if real_note in self.active_notes.keys():
+                            for n in self.active_notes.pop(real_note): # turn off all notes linked to the real one
+                                self._synth.noteoff(0, n)
+                    # noteon
+                    else:
+                        fake_notes = self.playable.next()
+
+                        # add entry to active_notes
+                        if real_note in self.active_notes.keys():
+                            self.active_notes[real_note] = fake_notes
+
+                        for note in fake_notes: # turn on all notes in the block
+                            # TODO: check block notes velocity
+                            self._synth.noteon(0, note, message[2])
+
+            elif message[0] == 176:     # sustain
+                self._synth.cc(0, message[1], message[2])
+        
+        # yield control to the event loop
+        #await asyncio.sleep(0)
+
+    def process(self, message, delta_time):
+        threshold = self._threshold     # Minimum time (seconds) between inputs
+        time = 0.0                      # Elapsed time between inputs
+        
+        # Update time
+        if delta_time:
+            time += delta_time
+
+        # Process message
+        if message:
+            # NOTEON
+            if message['mode'] == Player.NOTE_ON:
+                # validate
+                if time<threshold or message['note']<self.breakpoint_note:
+                    return
+
+                fake_notes = self.playable.next()
+                real_note = message['note']
+                # add entry to active_notes
+                if real_note in self.active_notes.keys():
+                    self.active_notes[real_note] = fake_notes
+                for note in fake_notes: # turn on all notes in the block
+                    self._synth.noteon(0, note, message['vel']) #TODO: check block notes velocity
+                # Debug
+                print(message, delta_time)
+
+            # NOTEOFF
+            elif message['mode'] == Player.NOTE_OFF:
+                real_note = message['note']
+                if real_note in self.active_notes.keys():
+                    for n in self.active_notes.pop(real_note): # turn off all notes linked to the real one
+                        self._synth.noteoff(0, n)
+            # CONTROL
+            else:
+                self._synth.cc(0, message['ctrl'], message['val'])
+
+    def start(self):
+        """Starts reading and handling MIDI messages"""
 
         # Read and handle messages
         while True:
-            #Receive message
+            # Receive message
             message, delta_time = self.midi_in.get_message()
-
-            # Update time
-            if delta_time is None:
-                delta_time = 0
-            time += delta_time
-
-            # Process message
-            if message:
-                if len(message) >= 3 and message[0] == 144:     # noteon or noteoff
-
-                    # Debug
-                    print(message, delta_time)
-
-                    # Invalid input
-                    if message[1] < self.breakpoint_note or time < threshold:
-                        continue
-                    
-                    # Valid input
-                    time = 0
-                    if message[2] == 0:     # noteoff
-                        try:
-                            for note in self.noteoff_seq.pop():
-                                self._synth.noteoff(0, note)
-                        except: break
-                    else:                   # noteon
-                        try:
-                            self.active_keys.clear()
-                            for note in self.noteon_seq.pop():
-                                # TODO: check block notes velocity
-                                self.active_keys.append(note)
-                                self._synth.noteon(0, note, message[2])
-                        except: pass
-
-                elif message[0] == 176:     # sustain
-                    self._synth.cc(0, message[1], message[2])
+            # Process
+            self.process(message, delta_time)
+            
 
     def stop(self):
         pass
 
 if __name__ == '__main__':
     ply = Player("soundfonts/FluidR3_GM.sf2", synth_gain=2)
-    ply.load_midi("midi_files/a_comme_amour.mid")
+    keyboard_input = input_tools.KeyboardInput(ply)
+    keyboard_input.start()
+    reader = Reader()
+    reader.load_midi("midi_files/a_comme_amour.mid")
+    reader.load_track("right_hand")
+    ply.set_playable(reader.create_playable())
+    while True: pass
+
+
+    ply.load_midi("midi_files/nocturne_full.mid")
     ply.load_track("right_hand", load_threshold=1)
     ply.set_threshold(0.002)
     while True:
@@ -220,4 +284,4 @@ if __name__ == '__main__':
             break
         except:
             pass
-    ply.start()
+    #ply.start()

@@ -56,8 +56,7 @@ def play():
 def settings():
     return index()
 
-@app.route('/uploader', methods = ['POST']) 
-#TODO show list of midi_files dir content in html
+@app.route('/uploader', methods = ['POST']) #TODO list midi_files dir content in html
 def upload_file():
     if 'midi_file' in request.files:
         f = request.files['midi_file']
@@ -70,7 +69,8 @@ def upload_file():
 # Start flask
 def start_flask():
     app.run()
-server = Process(target=start_flask)
+#server = Process(target=start_flask)
+server = threading.Thread(target=start_flask)
 server.start()
 
 # Start Program window
