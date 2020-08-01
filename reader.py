@@ -41,7 +41,7 @@ class Reader():
                     aux_on.append(msg.note)
                 else:                               # Add note to new block
                     if aux_on:
-                        self.noteon_seq.insert(0, aux_on.copy())
+                        self.noteon_seq.append(aux_on.copy())
                     tics_on = 0
                     aux_on.clear()
                     aux_on.append(msg.note)

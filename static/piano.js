@@ -3,8 +3,11 @@ var canvas = null;
 window.onload = function() {
   canvas = document.getElementById("canvas");
   update();
-  requestAnimationFrame(update);
+  //requestAnimationFrame(update);
 };
+window.setInterval(function() {
+  update
+}, 1000);
 
 function receiveActiveKeys(response) {
   var obj = JSON.parse(response);

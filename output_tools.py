@@ -1,4 +1,6 @@
 import fluidsynth
+import rtmidi_python as rtmidi
+from threading import Thread
 
 class Output():
     """Interface that output devices must implement to be used by the Player object."""
@@ -32,6 +34,31 @@ class FluidSynthOutput(Output):
     def control(self, ctrl, value):
         self.synth.cc(0, ctrl, value)
 
+class DigitalPianoOutput(Output):
+    """Implementation of Output for a Yamaha P-45."""
+
+
+    def __init__(self):
+        self.midi_out = rtmidi.MidiOut(b'out')
+        i = 0
+        for port_name in self.midi_out.ports:
+            if b'Piano' in port_name:
+                self.midi_out.open_port(i)
+                break
+            i += 1
+        else:
+            raise Exception("Unable to detect Piano")
+    
+    def note_on(self, key, velocity):
+        self.midi_out.send_message([0x90, key, velocity])
+
+    def note_off(self, key):
+        self.midi_out.send_message([0x80, key, 0])
+
+    def control(self, ctrl, value):
+        self.midi_out.send_message([0xb0, ctrl, value])
+
 if __name__=='__main__':
-    fsout = FluidSynthOutput("soundfonts/AA_piano_cola.sf2")
+    fsout = FluidSynthOutput("soundfonts/FluidR3_GM.sf2")
     fsout.note_on(60,30)
+    while True: pass
