@@ -5,6 +5,7 @@ import time
 from playable import Playable
 from reader import Reader
 import input_tools
+from sequencer import Sequencer
 
 class Player:
 
@@ -28,6 +29,8 @@ class Player:
         self.midi_in = None 
         # Active keys list
         self._active_notes = {} # {real_note: fake_note}
+        # Sequencer for accompaniment
+        self.sequencer = Sequencer(self._synth) #TODO change initialization to set_output method when implemented
 
     def set_playable(self, playable: Playable):
         self.playable = playable
@@ -86,12 +89,18 @@ class Player:
                 if time<threshold or message['note']<self.breakpoint_note:
                     return
 
-                fake_notes = self.playable.next()
+                fake_notes, acc_block = self.playable.next()
                 real_note = message['note']
+
                 # add entry to active_notes
                 self.active_notes[real_note] = fake_notes
                 for note in fake_notes: # turn on all notes in the block
-                    self._synth.noteon(0, note, message['vel']) #TODO: check block notes velocity
+                    self._synth.noteon(0, note.value, message['vel']) #TODO: check block notes velocity
+
+                # add accompaniment to sequencer
+                if acc_block:
+                    self.sequencer.add(acc_block)
+                    
                 # Debug
                 print(message, delta_time)
 
@@ -100,13 +109,13 @@ class Player:
                 real_note = message['note']
                 if real_note in self.active_notes.keys():
                     for n in self.active_notes.pop(real_note): # turn off all notes linked to the real one
-                        self._synth.noteoff(0, n)
+                        self._synth.noteoff(0, n.value)
             # CONTROL
             else:
                 self._synth.cc(0, message['ctrl'], message['val'])
 
     def start(self):
-        pass
+        self.sequencer.add(self.playable.initial_accomp())
 
     def stop(self):
         pass
@@ -114,9 +123,11 @@ class Player:
 if __name__ == '__main__':
     ply = Player("soundfonts/FluidR3_GM.sf2", synth_gain=1, input_threshold=0)
     reader = Reader(0)
-    reader.load_midi("midi_files/fantaisie.mid")
-    reader.load_track("right_hand")
+    reader.load_midi("midi_files/nocturned.mid")
+    reader.load_melody("right_hand")
+    reader.load_accomp("left_hand")
     ply.set_playable(reader.create_playable())
-    keyboard_input = input_tools.DS4Input(ply)
+    ply.start()
+    keyboard_input = input_tools.KeyboardInput(ply)
     keyboard_input.start()
     while True: pass

@@ -215,6 +215,8 @@ class DS4Input(Input):
         self.delta_time = self.t1 - self.t0
         self.t0 = datetime.now()
 
+        if button not in self.active_buttons.keys(): return
+        
         # Build message
         msg = {
             'type': Player.NOTE_OFF,

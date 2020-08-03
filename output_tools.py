@@ -37,7 +37,6 @@ class FluidSynthOutput(Output):
 class DigitalPianoOutput(Output):
     """Implementation of Output for a Yamaha P-45."""
 
-
     def __init__(self):
         self.midi_out = rtmidi.MidiOut(b'out')
         i = 0
