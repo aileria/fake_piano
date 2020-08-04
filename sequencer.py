@@ -17,8 +17,8 @@ class Sequencer():
     def play(self, accompaniment_block, playback_speed):
         for note in accompaniment_block:
             time.sleep(note.start_time / playback_speed)
-            #self.output.note_on(note.value, Sequencer.VELOCITY)
-            self.output.noteon(0, note.value, Sequencer.VELOCTIY) # fsout testing
+            self.output.note_on(note.value, Sequencer.VELOCTIY)
+            #self.output.noteon(0, note.value, Sequencer.VELOCTIY) # fsout testing
 
     def stop(self):
         pass

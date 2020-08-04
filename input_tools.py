@@ -1,4 +1,4 @@
-from player import Player
+import player
 import rtmidi_python as rtmidi
 from threading import Thread
 from datetime import datetime
@@ -10,8 +10,8 @@ from pyPS4Controller.controller import Controller
 class Input():
     """Interface that input devices must implement to comunicate with the Player object."""
 
-    def __init__(self, player: Player):
-        self.player = player
+    def set_callback(self, callback):
+        self.callback = callback
 
     def start(self):
         pass
@@ -26,8 +26,7 @@ class KeyboardInput(Input):
 
     INPUT_VELOCITY = 60
 
-    def __init__(self, player: Player):
-        super().__init__(player)
+    def __init__(self):
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
         self.t0 = datetime.now()
         self.active_keys = {}
@@ -51,7 +50,7 @@ class KeyboardInput(Input):
         # Process
         if key == Key.shift or key == Key.shift_r:
             msg = {
-                'type': Player.CONTROL,
+                'type': player.Player.CONTROL,
                 'ctrl': 64,
                 'val': 0
             }
@@ -69,11 +68,11 @@ class KeyboardInput(Input):
 
             # Build message
             msg = {
-                'type': Player.NOTE_ON,
+                'type': player.Player.NOTE_ON,
                 'note': self.active_keys[key],
                 'vel': self.INPUT_VELOCITY
             }
-        self.player.process(msg, self.delta_time.total_seconds())
+        self.callback(msg, self.delta_time.total_seconds())
 
     def on_release(self, key):
         # Calculate delta_time
@@ -84,7 +83,7 @@ class KeyboardInput(Input):
         # Process
         if key == Key.shift or key == Key.shift_r:
             msg = {
-                'type': Player.CONTROL,
+                'type': player.Player.CONTROL,
                 'ctrl': 64,
                 'val': 0
             }
@@ -97,16 +96,15 @@ class KeyboardInput(Input):
                 
             # Build message
             msg = {
-                'type': Player.NOTE_OFF,
+                'type': player.Player.NOTE_OFF,
                 'note': self.active_keys.pop(key)
             }
-        self.player.process(msg, self.delta_time.total_seconds())
+        self.callback(msg, self.delta_time.total_seconds())
 
 class DigitalPianoInput(Input):
     """Implementation of Input for a Yamaha P-45."""
 
-    def __init__(self, player: Player):
-        super().__init__(player)
+    def __init__(self):
         self.midi_in = rtmidi.MidiIn(b'in')
         i = 0
         for port in self.midi_in.ports:
@@ -124,7 +122,7 @@ class DigitalPianoInput(Input):
     
     def start(self):
         self.stop_thread = False
-        self.thread = Thread(target=self.loop, args=(lambda : self.stop_thread))
+        self.thread = Thread(target=self.loop, args=[(lambda : self.stop_thread)])
         self.thread.start()
 
     def stop(self):
@@ -132,7 +130,6 @@ class DigitalPianoInput(Input):
         self.stop_thread = True
         self.thread.join()
 
-    #TODO fix sustain_on/off distinction in piano
     def loop(self, stop_thread):
         while True:
             # Exit condition
@@ -142,40 +139,40 @@ class DigitalPianoInput(Input):
             message, delta_time = self.midi_in.get_message()
 
             # Process
+            print(message, delta_time)
             if message:
                 # noteon or noteoff
                 if len(message) >= 3 and message[0] == 144:
                     # noteoff
                     if message[2] == 0:
                         msg = {
-                            'type': Player.NOTE_OFF,
+                            'type': player.Player.NOTE_OFF,
                             'note': message[1]
                         }
                     # noteon
                     else:
                         msg = {
-                            'type': Player.NOTE_ON,
+                            'type': player.Player.NOTE_ON,
                             'note': message[1],
                             'vel': message[2]
                         }
                 # sustain
                 elif message[0] == 176:
                     msg = {
-                        'type': Player.CONTROL,
+                        'type': player.Player.CONTROL,
                         'ctrl': message[1],
                         'val': message[2]
                     }
 
                 # Send message to Player
-                self.player.process(msg, delta_time)
+                self.callback(msg, delta_time)
 
 class DS4Input(Input):
     """Implementation of Input for a DualShock4 controller."""
 
     INPUT_VELOCITY = 60
 
-    def __init__(self, player: Player):
-        super().__init__(player)
+    def __init__(self):
         self.controller = DS4PianoController(self.on_press, self.on_release, self.on_sustain)
         self.active_buttons = {}
         self.t0 = datetime.now()
@@ -203,11 +200,11 @@ class DS4Input(Input):
 
         # Build message
         msg = {
-            'type': Player.NOTE_ON,
+            'type': player.Player.NOTE_ON,
             'note': self.active_buttons[button],
             'vel': self.INPUT_VELOCITY
         }
-        self.player.process(msg, self.delta_time.total_seconds())
+        self.callback(msg, self.delta_time.total_seconds())
 
     def on_release(self, button):
         # Calculate delta_time
@@ -219,10 +216,10 @@ class DS4Input(Input):
         
         # Build message
         msg = {
-            'type': Player.NOTE_OFF,
+            'type': player.Player.NOTE_OFF,
             'note': self.active_buttons.pop(button)
         }
-        self.player.process(msg, self.delta_time.total_seconds())
+        self.callback(msg, self.delta_time.total_seconds())
 
     def on_sustain(self, value):
         # Calculate delta_time
@@ -231,11 +228,11 @@ class DS4Input(Input):
         self.t0 = datetime.now()
 
         msg = {
-            'type': Player.CONTROL,
+            'type': player.Player.CONTROL,
             'ctrl': 64,
             'val': value
         }
-        self.player.process(msg, self.delta_time.total_seconds())
+        self.callback(msg, self.delta_time.total_seconds())
 
 class DS4PianoController(Controller):
 

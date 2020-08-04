@@ -1,10 +1,8 @@
-import rtmidi_python as rtmidi
-import fluidsynth
-import mido
 import time
 from playable import Playable
 from reader import Reader
-import input_tools
+from input_tools import *
+from output_tools import *
 from sequencer import Sequencer
 
 class Player:
@@ -15,37 +13,14 @@ class Player:
     SUSTAIN_ON = 3
     SUSTAIN_OFF = 4
 
-    def __init__(self, sf2_path, driver='alsa', channel=0, synth_gain=1, volume=127, input_threshold=0.02):
-        # Synth
-        self._synth = fluidsynth.Synth(gain=synth_gain)
-        self._synth.start(driver)
-        sfid = self._synth.sfload(sf2_path)
-        self._synth.program_select(0, sfid, 0, 0)
-        self._synth.cc(0, 7, volume)
+    def __init__(self, input_threshold=0.02):
         self.breakpoint_note = -1
-        # Threshold
-        self._threshold = input_threshold
-        # Midi input port
-        self.midi_in = None 
-        # Active keys list
-        self._active_notes = {} # {real_note: fake_note}
-        # Sequencer for accompaniment
-        self.sequencer = Sequencer(self._synth) #TODO change initialization to set_output method when implemented
+        self.threshold = input_threshold
+        self.active_notes = {} # {real_note: fake_note}
 
+    # Playable
     def set_playable(self, playable: Playable):
         self.playable = playable
-
-    @property
-    def active_notes(self):
-        return self._active_notes
-
-    @property
-    def threshold(self):
-        return self._threshold
-
-    @threshold.setter
-    def threshold(self, t):
-        self._threshold = t
 
     # Breakpoint note
     def set_breakpoint_note(self, note):
@@ -76,8 +51,17 @@ class Player:
     def set_playback_speed(self, speed):
         self.playback_speed = speed
 
+    # Input and output
+    def set_input(self, input_device):
+        input_device.set_callback(self.process)
+
+    def set_output(self, output):
+        self.output = output
+        self.sequencer = Sequencer(output)
+
+    # Process message
     def process(self, message, delta_time):
-        threshold = self._threshold     # Minimum time (seconds) between inputs
+        threshold = self.threshold     # Minimum time (seconds) between inputs
         time = 0.0                      # Elapsed time between inputs
         
         # Update time
@@ -98,7 +82,7 @@ class Player:
                 # add entry to active_notes and play notes
                 self.active_notes[real_note] = mel_block
                 for note in mel_block: # turn on all notes in the block
-                    self._synth.noteon(0, note.value, message['vel'])
+                    self.output.note_on(note.value, message['vel'])
 
                 # add accompaniment to sequencer
                 if acc_block:
@@ -112,10 +96,10 @@ class Player:
                 real_note = message['note']
                 if real_note in self.active_notes.keys():
                     for n in self.active_notes.pop(real_note): # turn off all notes linked to the real one
-                        self._synth.noteoff(0, n.value)
+                        self.output.note_off(n.value)
             # CONTROL
             else:
-                self._synth.cc(0, message['ctrl'], message['val'])
+                self.output.control(message['ctrl'], message['val'])
 
     def start(self):
         self.sequencer.add(self.playable.initial_accomp(), 1)
@@ -124,14 +108,21 @@ class Player:
         pass
 
 if __name__ == '__main__':
-    ply = Player("soundfonts/FluidR3_GM.sf2", synth_gain=1, input_threshold=0)
+
+    ply = Player(input_threshold=0)
+
     reader = Reader(0)
-    reader.load_midi("midi_files/fur_elise.mid")
+    reader.load_midi("midi_files/nocturne.mid")
     reader.load_melody("right_hand")
     reader.load_accomp("left_hand")
     ply.set_playable(reader.create_playable())
     ply.set_playback_speed(1)
+
+    output_device = FluidSynthOutput("soundfonts/FluidR3_GM.sf2")
+    ply.set_output(output_device)
+    input_device = DigitalPianoInput()
+    ply.set_input(input_device)
+
     ply.start()
-    input_device = input_tools.KeyboardInput(ply)
     input_device.start()
     while True: pass
