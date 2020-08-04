@@ -73,6 +73,9 @@ class Player:
     def set_threshold(self, threshold):
         self.threshold = threshold
 
+    def set_playback_speed(self, speed):
+        self.playback_speed = speed
+
     def process(self, message, delta_time):
         threshold = self._threshold     # Minimum time (seconds) between inputs
         time = 0.0                      # Elapsed time between inputs
@@ -86,20 +89,20 @@ class Player:
             # NOTEON
             if message['type'] == Player.NOTE_ON:
                 # validate
-                if time<threshold or message['note']<self.breakpoint_note:
+                if time < threshold or message['note'] < self.breakpoint_note:
                     return
 
-                fake_notes, acc_block = self.playable.next()
+                mel_block, acc_block = self.playable.next()
                 real_note = message['note']
 
-                # add entry to active_notes
-                self.active_notes[real_note] = fake_notes
-                for note in fake_notes: # turn on all notes in the block
-                    self._synth.noteon(0, note.value, message['vel']) #TODO: check block notes velocity
+                # add entry to active_notes and play notes
+                self.active_notes[real_note] = mel_block
+                for note in mel_block: # turn on all notes in the block
+                    self._synth.noteon(0, note.value, message['vel'])
 
                 # add accompaniment to sequencer
                 if acc_block:
-                    self.sequencer.add(acc_block)
+                    self.sequencer.add(acc_block, self.playback_speed) # playback_speed changes the accomp playback speed
                     
                 # Debug
                 print(message, delta_time)
@@ -115,7 +118,7 @@ class Player:
                 self._synth.cc(0, message['ctrl'], message['val'])
 
     def start(self):
-        self.sequencer.add(self.playable.initial_accomp())
+        self.sequencer.add(self.playable.initial_accomp(), 1)
 
     def stop(self):
         pass
@@ -123,11 +126,12 @@ class Player:
 if __name__ == '__main__':
     ply = Player("soundfonts/FluidR3_GM.sf2", synth_gain=1, input_threshold=0)
     reader = Reader(0)
-    reader.load_midi("midi_files/nocturned.mid")
+    reader.load_midi("midi_files/fur_elise.mid")
     reader.load_melody("right_hand")
     reader.load_accomp("left_hand")
     ply.set_playable(reader.create_playable())
+    ply.set_playback_speed(1)
     ply.start()
-    keyboard_input = input_tools.KeyboardInput(ply)
-    keyboard_input.start()
+    input_device = input_tools.KeyboardInput(ply)
+    input_device.start()
     while True: pass

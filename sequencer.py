@@ -9,15 +9,15 @@ class Sequencer():
         self.output = output
         self.thread = None
 
-    def add(self, accompaniment_block):
+    def add(self, accompaniment_block, playback_speed):
         self.stop()
-        self.thread = Thread(target=self.play, args=[accompaniment_block])
+        self.thread = Thread(target=self.play, args=[accompaniment_block, playback_speed])
         self.thread.start()
 
-    def play(self, accompaniment_block):
+    def play(self, accompaniment_block, playback_speed):
         for note in accompaniment_block:
-            time.sleep(note.start_time)
-            #self.output.note_on(note.value, Sequencer.VELOCTIY)
+            time.sleep(note.start_time / playback_speed)
+            #self.output.note_on(note.value, Sequencer.VELOCITY)
             self.output.noteon(0, note.value, Sequencer.VELOCTIY) # fsout testing
 
     def stop(self):
