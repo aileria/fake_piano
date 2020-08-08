@@ -2,6 +2,7 @@
 *.txt
 *.log
 *.temp
+*test*.*
 #Personal directories
 midi_files/
 soundfonts/

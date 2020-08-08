@@ -117,3 +117,20 @@ class Reader():
 
     def create_playable(self):
         return Playable(self.melody, self.accomp)
+
+if __name__=='__main__':
+    reader = Reader(1)
+    reader.load_midi("midi_files/ballade_gminor.mid")
+    reader.load_melody("right_hand")
+    reader.load_accomp("left_hand")
+
+    p = reader.create_playable()
+
+    while input() != '0':
+        mel, acc = p.next()
+        print("- melody -")
+        for note in mel:
+            print(note.value, note.start_time, note.duration)
+        print("- accomp -")
+        for note in acc:
+            print(note.value, note.start_time, note.duration)

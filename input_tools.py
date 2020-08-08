@@ -139,7 +139,6 @@ class DigitalPianoInput(Input):
             message, delta_time = self.midi_in.get_message()
 
             # Process
-            print(message, delta_time)
             if message:
                 # noteon or noteoff
                 if len(message) >= 3 and message[0] == 144:

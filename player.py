@@ -13,10 +13,13 @@ class Player:
     SUSTAIN_ON = 3
     SUSTAIN_OFF = 4
 
-    def __init__(self, input_threshold=0.02):
+    def __init__(self, input_threshold=0.02, avg_size=5):
         self.breakpoint_note = -1
         self.threshold = input_threshold
         self.active_notes = {} # {real_note: fake_note}
+        self.rel_speed_avg = 0
+        self.last_speed_ratios = []
+        self.avg_size = avg_size
 
     # Playable
     def set_playable(self, playable: Playable):
@@ -53,7 +56,8 @@ class Player:
 
     # Input and output
     def set_input(self, input_device):
-        input_device.set_callback(self.process)
+        self.input = input_device
+        self.input.set_callback(self.process)
 
     def set_output(self, output):
         self.output = output
@@ -62,7 +66,7 @@ class Player:
     # Process message
     def process(self, message, delta_time):
         threshold = self.threshold     # Minimum time (seconds) between inputs
-        time = 0.0                      # Elapsed time between inputs
+        time = 0.0
         
         # Update time
         if delta_time:
@@ -79,6 +83,14 @@ class Player:
                 mel_block, acc_block = self.playable.next()
                 real_note = message['note']
 
+                # update average time between inputs
+                self.last_speed_ratios.insert(0, mel_block[0].duration / time)
+                if len(self.last_speed_ratios) > self.avg_size:
+                    self.last_speed_ratios.pop()
+
+                self.rel_speed_avg = sum(self.last_speed_ratios) / len(self.last_speed_ratios) # Make exponential (EMA)
+                cur_speed = self.rel_speed_avg
+
                 # add entry to active_notes and play notes
                 self.active_notes[real_note] = mel_block
                 for note in mel_block: # turn on all notes in the block
@@ -86,10 +98,11 @@ class Player:
 
                 # add accompaniment to sequencer
                 if acc_block:
-                    self.sequencer.add(acc_block, self.playback_speed) # playback_speed changes the accomp playback speed
+                    self.sequencer.add(acc_block, cur_speed) # playback_speed changes the accomp playback speed
                     
                 # Debug
                 print(message, delta_time)
+                time = 0.0
 
             # NOTEOFF
             elif message['type'] == Player.NOTE_OFF:
@@ -103,16 +116,17 @@ class Player:
 
     def start(self):
         self.sequencer.add(self.playable.initial_accomp(), 1)
+        self.input.start()
 
     def stop(self):
         pass
 
 if __name__ == '__main__':
 
-    ply = Player(input_threshold=0)
+    ply = Player(input_threshold=0, avg_size=5)
 
     reader = Reader(0)
-    reader.load_midi("midi_files/nocturne.mid")
+    reader.load_midi("midi_files/fur_elise.mid")
     reader.load_melody("right_hand")
     reader.load_accomp("left_hand")
     ply.set_playable(reader.create_playable())
@@ -120,9 +134,9 @@ if __name__ == '__main__':
 
     output_device = FluidSynthOutput("soundfonts/FluidR3_GM.sf2")
     ply.set_output(output_device)
-    input_device = DigitalPianoInput()
+    input_device = KeyboardInput()
     ply.set_input(input_device)
 
     ply.start()
-    input_device.start()
+
     while True: pass
