@@ -13,46 +13,18 @@ class Player:
     SUSTAIN_ON = 3
     SUSTAIN_OFF = 4
 
-    def __init__(self, input_threshold=0.02, avg_size=5):
+    def __init__(self, input_threshold=0):
         self.breakpoint_note = -1
         self.threshold = input_threshold
-        self.active_notes = {} # {real_note: fake_note}
-        self.rel_speed_avg = 0
-        self.last_speed_ratios = []
-        self.avg_size = avg_size
+        self.active_notes = {} # {real_note: fake_notes}
 
     # Playable
     def set_playable(self, playable: Playable):
         self.playable = playable
 
-    # Breakpoint note
-    def set_breakpoint_note(self, note):
-        self.breakpoint_note = note
-    
-    def read_breakpoint_note(self, time_limit=5):
-        """Reads the breakpoint note from the connected MIDI input device"""
-
-        breakpoint_note = -1
-        print('Enter breakpoint note:')
-        start_time = time.perf_counter()
-        while breakpoint_note<=0:
-            # Check time limit
-            if time.perf_counter() - start_time >= time_limit:
-                break
-            # Read note
-            message = self.midi_in.get_message()[0]
-            if message:
-                if message[0] == 144:
-                    breakpoint_note = message[1]
-                    print("Breakpoint note = "+str(breakpoint_note)+"\n")
-        self.breakpoint_note = breakpoint_note
-
     # Threshold
     def set_threshold(self, threshold):
         self.threshold = threshold
-
-    def set_playback_speed(self, speed):
-        self.playback_speed = speed
 
     # Input and output
     def set_input(self, input_device):
@@ -63,7 +35,29 @@ class Player:
         self.output = output
         self.sequencer = Sequencer(output)
 
-    # Process message
+    # Process messages
+    def process(self, message, delta_time):
+        print(message, delta_time)
+
+    def start(self):
+        self.input.start()
+
+    def stop(self):
+        pass
+
+class AdaptativePlayer(Player):
+    
+    def __init__(self, memory_size=5, initial_speed=1):
+        super().__init__()
+        self.memory_size = memory_size
+        self.rel_speed_avg = 0
+        self.last_speed_ratios = []
+        self.initial_speed = initial_speed
+
+    def start(self):
+        super().start()
+        self.sequencer.add(self.playable.initial_accomp(), self.initial_speed)
+
     def process(self, message, delta_time):
         threshold = self.threshold     # Minimum time (seconds) between inputs
         time = 0.0
@@ -85,7 +79,7 @@ class Player:
 
                 # update average time between inputs
                 self.last_speed_ratios.insert(0, mel_block[0].duration / time)
-                if len(self.last_speed_ratios) > self.avg_size:
+                if len(self.last_speed_ratios) > self.memory_size:
                     self.last_speed_ratios.pop()
 
                 self.rel_speed_avg = sum(self.last_speed_ratios) / len(self.last_speed_ratios) # Make exponential (EMA)
@@ -100,8 +94,6 @@ class Player:
                 if acc_block:
                     self.sequencer.add(acc_block, cur_speed) # playback_speed changes the accomp playback speed
                     
-                # Debug
-                print(message, delta_time)
                 time = 0.0
 
             # NOTEOFF
@@ -114,23 +106,104 @@ class Player:
             else:
                 self.output.control(message['ctrl'], message['val'])
 
-    def start(self):
-        self.sequencer.add(self.playable.initial_accomp(), 1)
-        self.input.start()
+class FixedSpeedPlayer(Player):
 
-    def stop(self):
-        pass
+    def __init__(self, playback_speed=1):
+        super().__init__()
+        self.playback_speed = playback_speed
+
+    def start(self):
+        super().start()
+        self.sequencer.add(self.playable.initial_accomp(), self.playback_speed)
+
+    def process(self, message, delta_time):
+        threshold = self.threshold     # Minimum time (seconds) between inputs
+        time = 0.0
+        
+        # Update time
+        if delta_time:
+            time += delta_time
+
+        # Process message
+        if message:
+            # NOTEON
+            if message['type'] == Player.NOTE_ON:
+                # validate
+                if time < threshold or message['note'] < self.breakpoint_note:
+                    return
+
+                mel_block, acc_block = self.playable.next()
+                real_note = message['note']
+
+                # add entry to active_notes and play notes
+                self.active_notes[real_note] = mel_block
+                for note in mel_block: # turn on all notes in the block
+                    self.output.note_on(note.value, message['vel'])
+
+                # add accompaniment to sequencer
+                if acc_block:
+                    self.sequencer.add(acc_block, self.playback_speed) # playback_speed changes the accomp playback speed
+                    
+                time = 0.0
+
+            # NOTEOFF
+            elif message['type'] == Player.NOTE_OFF:
+                real_note = message['note']
+                if real_note in self.active_notes.keys():
+                    for n in self.active_notes.pop(real_note): # turn off all notes linked to the real one
+                        self.output.note_off(n.value)
+            # CONTROL
+            else:
+                self.output.control(message['ctrl'], message['val'])
+
+class MelodyPlayer(Player):
+    def process(self, message, delta_time):
+        threshold = self.threshold     # Minimum time (seconds) between inputs
+        time = 0.0
+        
+        # Update time
+        if delta_time:
+            time += delta_time
+
+        # Process message
+        if message:
+            # NOTEON
+            if message['type'] == Player.NOTE_ON:
+                # validate
+                if time < threshold or message['note'] < self.breakpoint_note:
+                    return
+
+                mel_block = self.playable.next()[0]
+                real_note = message['note']
+
+                # add entry to active_notes and play notes
+                self.active_notes[real_note] = mel_block
+                for note in mel_block: # turn on all notes in the block
+                    self.output.note_on(note.value, message['vel'])
+                    
+                time = 0.0
+
+            # NOTEOFF
+            elif message['type'] == Player.NOTE_OFF:
+                real_note = message['note']
+                if real_note in self.active_notes.keys():
+                    for n in self.active_notes.pop(real_note): # turn off all notes linked to the real one
+                        self.output.note_off(n.value)
+            # CONTROL
+            else:
+                self.output.control(message['ctrl'], message['val'])
 
 if __name__ == '__main__':
 
-    ply = Player(input_threshold=0, avg_size=5)
+    #ply = FixedSpeedPlayer(playback_speed=1)
+    ply = MelodyPlayer()
+    #ply = AdaptativePlayer(memory_size=5, initial_speed=1)
 
     reader = Reader(0)
-    reader.load_midi("midi_files/fur_elise.mid")
+    reader.load_midi("midi_files/fantaisie.mid")
     reader.load_melody("right_hand")
     reader.load_accomp("left_hand")
     ply.set_playable(reader.create_playable())
-    ply.set_playback_speed(1)
 
     output_device = FluidSynthOutput("soundfonts/FluidR3_GM.sf2")
     ply.set_output(output_device)

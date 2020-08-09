@@ -7,7 +7,7 @@ from pynput.keyboard import Listener, Key
 # DS4
 from pyPS4Controller.controller import Controller
 
-class Input():
+class Input:
     """Interface that input devices must implement to comunicate with the Player object."""
 
     def set_callback(self, callback):

@@ -19,7 +19,7 @@ class Sequencer():
         for note in accompaniment_block:
             time.sleep((note.start_time - last_note_start) / playback_speed)
             last_note_start = note.start_time
-            self.output.note_on(note.value, note.velocity)
+            self.output.note_on(note.value, Sequencer.VELOCTIY)
 
     def stop(self):
         pass

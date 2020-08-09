@@ -2,7 +2,7 @@ import fluidsynth
 import rtmidi_python as rtmidi
 from threading import Thread
 
-class Output():
+class Output:
     """Interface that output devices must implement to be used by the Player object."""
 
     def note_on(self, key, velocity):
