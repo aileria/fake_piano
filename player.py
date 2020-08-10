@@ -192,26 +192,3 @@ class MelodyPlayer(Player):
             # CONTROL
             else:
                 self.output.control(message['ctrl'], message['val'])
-
-if __name__ == '__main__':
-
-    ply = FixedSpeedPlayer(playback_speed=1)
-    #ply = MelodyPlayer()
-    #ply = AdaptativePlayer(memory_size=5, initial_speed=1)
-
-    reader = Reader(0)
-    reader.load_midi("midi_files/nocturne.mid")
-    reader.load_melody("right_hand")
-    reader.load_accomp("left_hand")
-    playable = reader.create_playable()
-    ply.set_playable(playable)
-
-    output_device = FluidSynthOutput("soundfonts/FluidR3_GM.sf2", gain=1)
-    #output_device = DigitalPianoOutput()
-    ply.set_output(output_device)
-    input_device = KeyboardInput()
-    ply.set_input(input_device)
-
-    ply.start()
-    
-    while True: pass

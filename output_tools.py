@@ -56,8 +56,3 @@ class DigitalPianoOutput(Output):
 
     def control(self, ctrl, value):
         self.midi_out.send_message([0xb0, ctrl, value])
-
-if __name__=='__main__':
-    fsout = FluidSynthOutput("soundfonts/FluidR3_GM.sf2")
-    fsout.note_on(60,30)
-    while True: pass
