@@ -1,5 +1,6 @@
 import player
 import rtmidi_python as rtmidi
+from rtmidi.midiutil import open_midiinput
 from threading import Thread
 from datetime import datetime
 # Keyboard
@@ -109,7 +110,7 @@ class DigitalPianoInput(Input):
         i = 0
         for port in self.midi_in.ports:
             if b'Piano' in port:
-                self.midi_in.open_port(i)
+                self.midi_in, port_name = open_midiinput(i)
                 break
             i += 1
         else:
@@ -121,50 +122,44 @@ class DigitalPianoInput(Input):
         return tuple(rtmidi.MidiIn(b'in').ports)
     
     def start(self):
-        self.stop_thread = False
-        self.thread = Thread(target=self.loop, args=[(lambda : self.stop_thread)])
-        self.thread.start()
+        data = self.callback # data to be used by rtmidi inside the callback function
+        self.midi_in.set_callback(self.process, data)
 
     def stop(self):
         self.midi_in.close_port()
-        self.stop_thread = True
-        self.thread.join()
 
-    def loop(self, stop_thread):
-        while True:
-            # Exit condition
-            if stop_thread: break
+    def process(self, message_and_delta, callback):
+        # Receive message
+        message = message_and_delta[0]
+        delta_time = message_and_delta[1]
 
-            # Receive message
-            message, delta_time = self.midi_in.get_message()
-
-            # Process
-            if message:
-                # noteon or noteoff
-                if len(message) >= 3 and message[0] == 144:
-                    # noteoff
-                    if message[2] == 0:
-                        msg = {
-                            'type': player.Player.NOTE_OFF,
-                            'note': message[1]
-                        }
-                    # noteon
-                    else:
-                        msg = {
-                            'type': player.Player.NOTE_ON,
-                            'note': message[1],
-                            'vel': message[2]
-                        }
-                # sustain
-                elif message[0] == 176:
+        # Process
+        if message:
+            # noteon or noteoff
+            if len(message) >= 3 and message[0] == 144:
+                print(message, delta_time)
+                # noteoff
+                if message[2] == 0:
                     msg = {
-                        'type': player.Player.CONTROL,
-                        'ctrl': message[1],
-                        'val': message[2]
+                        'type': player.Player.NOTE_OFF,
+                        'note': message[1]
                     }
-
-                # Send message to Player
-                self.callback(msg, delta_time)
+                # noteon
+                else:
+                    msg = {
+                        'type': player.Player.NOTE_ON,
+                        'note': message[1],
+                        'vel': message[2]
+                    }
+            # sustain
+            elif message[0] == 176:
+                msg = {
+                    'type': player.Player.CONTROL,
+                    'ctrl': message[1],
+                    'val': message[2]
+                }
+            # Send message to Player
+            callback(msg, delta_time)
 
 class DS4Input(Input):
     """Implementation of Input for a DualShock4 controller."""
