@@ -41,15 +41,23 @@ class Reader():
 
         # Read melody from MIDI
         elapsed_time = 0
+        last_note_time = 0
         completed_pointer = 0
         melody_notes = []
+        aux_block = []
         untracked_flag = False      # prevents completed_pointer from advancing
 
-        # melody (list of simple notes, not grouping in chords yet)
         for msg in midi:
             elapsed_time += msg.time
             if msg.type == 'note_on':
-                melody_notes.append([Note(msg.note, elapsed_time)])
+                if last_note_time == 0:
+                    last_note_time = elapsed_time
+                if elapsed_time - last_note_time > self.threshold:
+                    melody_notes.append(aux_block.copy())
+                    aux_block.clear()
+                    last_note_time = elapsed_time
+                aux_block.append(Note(msg.note, elapsed_time))
+
             if msg.type == 'note_off':
                 for i in range(completed_pointer,len(melody_notes)):
                     for note in melody_notes[i]:
@@ -97,7 +105,8 @@ class Reader():
                 last_mel_start = self.melody[melody_position-1][0].start_time
 
             if msg.type == 'note_on':
-                accomp_notes[melody_position].append(Note(msg.note, elapsed_time - last_mel_start, msg.velocity))
+                accomp_notes[melody_position].append(
+                    Note(msg.note, elapsed_time - last_mel_start, msg.velocity))
 
             if msg.type == 'note_off':
                 for i in range(completed_pointer,len(accomp_notes)):

@@ -43,7 +43,7 @@ class Player:
         self.input.start()
 
     def stop(self):
-        pass
+        self.input.stop()
 
 class AdaptativePlayer(Player):
     
@@ -195,21 +195,23 @@ class MelodyPlayer(Player):
 
 if __name__ == '__main__':
 
-    #ply = FixedSpeedPlayer(playback_speed=1)
-    ply = MelodyPlayer()
+    ply = FixedSpeedPlayer(playback_speed=1)
+    #ply = MelodyPlayer()
     #ply = AdaptativePlayer(memory_size=5, initial_speed=1)
 
     reader = Reader(0)
-    reader.load_midi("midi_files/fantaisie.mid")
+    reader.load_midi("midi_files/nocturne.mid")
     reader.load_melody("right_hand")
     reader.load_accomp("left_hand")
-    ply.set_playable(reader.create_playable())
+    playable = reader.create_playable()
+    ply.set_playable(playable)
 
-    output_device = FluidSynthOutput("soundfonts/FluidR3_GM.sf2")
+    output_device = FluidSynthOutput("soundfonts/FluidR3_GM.sf2", gain=1)
+    #output_device = DigitalPianoOutput()
     ply.set_output(output_device)
     input_device = KeyboardInput()
     ply.set_input(input_device)
 
     ply.start()
-
+    
     while True: pass
