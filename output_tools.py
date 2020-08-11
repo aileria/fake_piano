@@ -1,5 +1,9 @@
-import fluidsynth
-import rtmidi_python as rtmidi
+try:
+    import fluidsynth
+except:
+    print("NO FLUIDSYNTH")
+#import rtmidi_python as rtmidi #linux
+import rtmidi #windows
 from threading import Thread
 
 class Output:

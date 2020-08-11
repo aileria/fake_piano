@@ -1,8 +1,4 @@
-import time
 from playable import Playable
-from reader import Reader
-from input_tools import *
-from output_tools import *
 from sequencer import Sequencer
 
 class Player:
@@ -31,9 +27,9 @@ class Player:
         self.input = input_device
         self.input.set_callback(self.process)
 
-    def set_output(self, output):
-        self.output = output
-        self.sequencer = Sequencer(output)
+    def set_output(self, output_device):
+        self.output = output_device
+        self.sequencer = Sequencer(self.output)
 
     # Process messages
     def process(self, message, delta_time):

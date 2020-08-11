@@ -1,10 +1,5 @@
-import mido
 from playable import Playable, Note
-
-from output_tools import FluidSynthOutput
 from mido import MidiFile
-import time
-from sequencer import Sequencer
 
 class Reader():
     def __init__(self, read_threshold=1):
@@ -15,7 +10,7 @@ class Reader():
     def load_midi(self, path):
         """Loads the MIDI file of the specified path"""
 
-        self.midi = mido.MidiFile(path)
+        self.midi = MidiFile(path)
 
     def available_midi_tracks(self):
         """Returns a list with the available tracks in the MIDI file"""
