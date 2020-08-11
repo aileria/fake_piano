@@ -60,3 +60,31 @@ class DigitalPianoOutput(Output):
 
     def control(self, ctrl, value):
         self.midi_out.send_message([0xb0, ctrl, value])
+
+class VirtualPortOutput(Output):
+    """Implementation of Output for a virtual MIDI port."""
+
+    def __init__(self, port_name='fake_piano'):
+        self.midi_out = rtmidi.MidiOut()
+        # Try to open virtual port (not compatible with windows)
+        try:
+            self.midi_out.open_virtual_port(name=port_name)
+        except Exception:
+            print("Virtual port couldn't be opened")
+
+        # Workaround for windows with loopMidi or similar
+        i = 0
+        for port in self.midi_out.get_ports():
+            if port_name in port:
+                self.midi_out.open_port(i)
+                break
+            i += 1
+
+    def note_on(self, key, velocity):
+        self.midi_out.send_message([0x90, key, velocity])
+
+    def note_off(self, key):
+        self.midi_out.send_message([0x80, key, 0])
+
+    def control(self, ctrl, value):
+        self.midi_out.send_message([0xb0, ctrl, value])
