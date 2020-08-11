@@ -4,6 +4,7 @@
 *.temp
 *test*.*
 *.json
+*.dll
 #Personal directories
 midi_files/
 soundfonts/
