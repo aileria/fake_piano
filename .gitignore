@@ -8,6 +8,7 @@
 midi_files/
 soundfonts/
 useful_scripts/
+virtual*/
 #Temp
 __pycache__/
 *gui*.py
