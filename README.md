@@ -1,21 +1,40 @@
 # fake_piano
-Interpreta piezas musicales almacenadas como archivos MIDI con un piano digital, sin saber cómo usarlo.
-## Instalación
-### Requisitos previos
-Los scipts requieren *Pyton 3* para ejecutarse. Además son necesarios ciertos módulos y herramientas para un correcto funcionamiento.
+Interpreta piezas musicales en un piano digital sin saber como usarlo.
 
-* [pyFluidSynth](https://github.com/nwhitehead/pyfluidsynth) - Envoltorio de FluidSynth para Python
+Las notas tocadas en el piano serán sustituidas por las indicadas en un archivo MIDI antes de reproducirse, permitiendo interpretar la melodía original.
+
+Aunque el programa ha sido pensado para usar un piano digital como dispositivo de entrada y un puerto MIDI como salida, es posible usar otros medios de entrada y de salida.
+
+## Instalación
+### Requisitos mínimos
+Los scripts requieren *Pyton 3* para ejecutarse. Además son necesarios ciertos módulos y herramientas para su correcto funcionamiento.
+
+* [Mido](https://pypi.org/project/mido/) - Para trabajar con archivos MIDI
 ```
-pip3 install pyFluidSynth
+pip install mido
 ```
-* [Mido](https://pypi.org/project/mido/) - Librería para trabajar con mensajes y puertos MIDI
+* [python-rtmidi](https://pypi.org/project/python-rtmidi/) - Para gestionar puertos MIDI
 ```
-pip3 install mido
+pip install python-rtmidi
 ```
-### Requisitos funcionales
-Adicionalmente, serán necesarios archivos MIDI y SF2 (soundfont o instrumentos virtuales) no proporcionados en este repositorio.
+
+### Requisitos opcionales
+Es posible ampliar la funcionalidad en cuanto a dispositivos de entrada y salida posibles, aunque para ello puede ser necesario instalar módulos externos.
+
+* [pyFluidSynth](https://github.com/nwhitehead/pyfluidsynth) - Para usar como salida el sintetizador FluidSynth.
+```
+pip install pyFluidSynth
+```
+* [pynput](https://pypi.org/project/pynput/) - Para usar como entrada el teclado del ordenador.
+```
+pip install pynput
+```
+* [pyPS4Controller](https://pypi.org/project/pyPS4Controller/) - Para usar como entrada un controlador DualShock 4.
+```
+pip install pyPS4Controller
+```
 
 ## Uso básico
-Ejecuta el archivo *fake_piano.py*, previamente indicando en este la ruta al archivo MIDI, la ruta al archivo de instrumento virtual .sf2 y el nombre del puerto del piano digital.
-
-Cada tecla pulsada en el piano digital producirá un mensaje MIDI que recibirá el script, el cual sustituirá el valor de la nota tocada por el de la nota siguiente en el MIDI cargado, enviando finalmente este mensaje modificado al sintetizador, que reproducirá el sonido.
+El programa consta de dos partes básicas, la lectura de los archivos MIDI y su reproducción. Las clases correspondientes a cada tarea principal son Reader y Player respectivamente.
+<br>El objeto Reader es usado para leer un archivo MIDI y crear un objeto (Playable) que Player es capaz de reproducir. 
+<br>El objeto Player se encarga de leer los mensajes enviados por el dispositivo de entrada elegido y modificarlos antes de enviarlos al dispositivo de salida.
