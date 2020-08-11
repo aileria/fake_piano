@@ -5,8 +5,11 @@ class Note():
         self.velocity = velocity
         self.start_time = start_time
 
-    def set_duration(self, end_time):
+    def set_end_time(self, end_time):
         self.duration = end_time - self.start_time
+
+    def set_start_time(self, start_time):
+        self.start_time = start_time
 
     def set_velocity(self, velocity):
         self.velocity = velocity

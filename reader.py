@@ -45,7 +45,6 @@ class Reader():
         completed_pointer = 0
         melody_notes = []
         aux_block = []
-        untracked_flag = False      # prevents completed_pointer from advancing
 
         for msg in midi:
             elapsed_time += msg.time
@@ -59,19 +58,28 @@ class Reader():
                 aux_block.append(Note(msg.note, elapsed_time))
 
             if msg.type == 'note_off':
+                completed_block = True  # prevents completed_pointer from advancing
+                # Search note in melody_notes
                 for i in range(completed_pointer,len(melody_notes)):
                     for note in melody_notes[i]:
                         if note.duration == 0:
-                            untracked_flag = True
                             if note.value == msg.note:
-                                note.set_duration(elapsed_time)
-                                untracked_flag = False
+                                note.set_end_time(elapsed_time)
                                 break
-                        else:
-                            if not untracked_flag:
-                                completed_pointer += 1
+                            completed_block = False
+                    if completed_block:
+                        completed_pointer += 1
+                # Search note in aux_block
+                for note in aux_block:
+                    if note.duration == 0:
+                        if note.value == msg.note:
+                            note.set_end_time(elapsed_time)
+                            break
         
         self.melody = melody_notes
+        for notes in melody_notes:
+            for note in notes:
+                print(note.value, note.start_time, note.duration)
     
     def load_accomp(self, name):
 
@@ -109,19 +117,22 @@ class Reader():
                     Note(msg.note, elapsed_time - last_mel_start, msg.velocity))
 
             if msg.type == 'note_off':
+                completed_block = True
                 for i in range(completed_pointer,len(accomp_notes)):
                     notes = accomp_notes[i]
                     for note in notes:
                         if note.duration == 0:
-                            untracked_flag = True
                             if note.value == msg.note:
-                                note.set_duration(elapsed_time)
-                                untracked_flag = False
+                                note.set_end_time(elapsed_time)
                                 break
-                        else:
-                            if not untracked_flag:
-                                completed_pointer += 1
+                            completed_block = False
+                    if completed_block:
+                        completed_pointer += 1
         
+        # Remove useless time at the beginning
+        for note in accomp_notes[0]:
+            note.set_start_time(note.start_time - accomp_notes[0][0].start_time)
+
         self.accomp = accomp_notes
 
     def create_playable(self):
