@@ -3,6 +3,7 @@
 *.log
 *.temp
 *test*.*
+*.json
 #Personal directories
 midi_files/
 soundfonts/
