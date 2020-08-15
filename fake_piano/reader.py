@@ -72,9 +72,6 @@ class Reader():
                             break
         
         self.melody = melody_notes
-        for notes in melody_notes:
-            for note in notes:
-                print(note.value, note.start_time, note.duration)
     
     def load_accomp(self, name):
 
