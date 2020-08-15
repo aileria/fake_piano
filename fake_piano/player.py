@@ -1,5 +1,5 @@
-from playable import Playable
-from sequencer import Sequencer
+from .playable import Playable
+from .sequencer import Sequencer
 
 class Player:
 
@@ -12,7 +12,7 @@ class Player:
     def __init__(self, input_threshold=0):
         self.breakpoint_note = -1
         self.threshold = input_threshold
-        self.active_notes = {} # {real_note: fake_notes}
+        self.active_notes = dict() # {real_note: fake_notes}
 
     # Playable
     def set_playable(self, playable: Playable):
@@ -47,7 +47,7 @@ class AdaptativePlayer(Player):
         super().__init__()
         self.memory_size = memory_size
         self.rel_speed_avg = 0
-        self.last_speed_ratios = []
+        self.last_speed_ratios = list()
         self.initial_speed = initial_speed
 
     def start(self):

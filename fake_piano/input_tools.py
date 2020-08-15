@@ -1,4 +1,4 @@
-import player
+from .player import Player
 #import rtmidi_python as rtmidi #linux
 import rtmidi
 from rtmidi.midiutil import open_midiinput
@@ -52,7 +52,7 @@ class KeyboardInput(Input):
         # Process
         if key == Key.shift or key == Key.shift_r:
             msg = {
-                'type': player.Player.CONTROL,
+                'type': Player.CONTROL,
                 'ctrl': 64,
                 'val': 0
             }
@@ -70,7 +70,7 @@ class KeyboardInput(Input):
 
             # Build message
             msg = {
-                'type': player.Player.NOTE_ON,
+                'type': Player.NOTE_ON,
                 'note': self.active_keys[key],
                 'vel': self.INPUT_VELOCITY
             }
@@ -85,7 +85,7 @@ class KeyboardInput(Input):
         # Process
         if key == Key.shift or key == Key.shift_r:
             msg = {
-                'type': player.Player.CONTROL,
+                'type': Player.CONTROL,
                 'ctrl': 64,
                 'val': 0
             }
@@ -98,7 +98,7 @@ class KeyboardInput(Input):
                 
             # Build message
             msg = {
-                'type': player.Player.NOTE_OFF,
+                'type': Player.NOTE_OFF,
                 'note': self.active_keys.pop(key)
             }
         self.callback(msg, self.delta_time.total_seconds())
@@ -143,20 +143,20 @@ class DigitalPianoInput(Input):
                 # noteoff
                 if message[2] == 0:
                     msg = {
-                        'type': player.Player.NOTE_OFF,
+                        'type': Player.NOTE_OFF,
                         'note': message[1]
                     }
                 # noteon
                 else:
                     msg = {
-                        'type': player.Player.NOTE_ON,
+                        'type': Player.NOTE_ON,
                         'note': message[1],
                         'vel': message[2]
                     }
             # sustain
             elif message[0] == 176:
                 msg = {
-                    'type': player.Player.CONTROL,
+                    'type': Player.CONTROL,
                     'ctrl': message[1],
                     'val': message[2]
                 }
@@ -200,7 +200,7 @@ try:
 
             # Build message
             msg = {
-                'type': player.Player.NOTE_ON,
+                'type': Player.NOTE_ON,
                 'note': self.active_buttons[button],
                 'vel': self.INPUT_VELOCITY
             }
@@ -216,7 +216,7 @@ try:
 
             # Build message
             msg = {
-                'type': player.Player.NOTE_OFF,
+                'type': Player.NOTE_OFF,
                 'note': self.active_buttons.pop(button)
             }
             self.callback(msg, self.delta_time.total_seconds())
@@ -228,7 +228,7 @@ try:
             self.t0 = datetime.now()
 
             msg = {
-                'type': player.Player.CONTROL,
+                'type': Player.CONTROL,
                 'ctrl': 64,
                 'val': value
             }

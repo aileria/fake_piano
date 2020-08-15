@@ -5,11 +5,11 @@
 *test*.*
 *.json
 *.dll
-#Personal directories
-midi_files/
-soundfonts/
-useful_scripts/
+#Internal use
 virtual*/
+data/
+tests/
+docs/
+examples/
 #Temp
 __pycache__/
-*gui*.py

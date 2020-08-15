@@ -1,4 +1,4 @@
-from playable import Playable, Note
+from .playable import Playable, Note
 from mido import MidiFile
 
 class Reader():
