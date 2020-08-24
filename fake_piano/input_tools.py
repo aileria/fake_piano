@@ -9,17 +9,14 @@ try:
 except:
     print("NO PYNPUT")
 
+def available_inputs() -> list:
+    return rtmidi.MidiIn().get_ports()
+
 class Input:
     """Interface that input devices must implement to comunicate with the Player object."""
 
-    def set_callback(self, callback):
-        self.callback = callback
-
-    def start(self):
-        pass
-    
-    def stop(self):
-        pass
+    def start(self): ...
+    def stop(self): ...
 
 class KeyboardInput(Input):
     """Implementation of Input for a computer keyboard. Every key will be interpreted

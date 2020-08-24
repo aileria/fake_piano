@@ -6,17 +6,15 @@ except:
 import rtmidi #windows
 from threading import Thread
 
+def available_outputs() -> list:
+    return rtmidi.MidiOut().get_ports()
+
 class Output:
     """Interface that output devices must implement to be used by the Player object."""
 
-    def note_on(self, key, velocity):
-        pass
-    
-    def note_off(self, key):
-        pass
-
-    def control(self, ctrl, value):
-        pass
+    def note_on(self, key, velocity): ...
+    def note_off(self, key): ...
+    def control(self, ctrl, value): ...
 
 class FluidSynthOutput(Output):
     """Implementation of Output for FluidSynth."""
