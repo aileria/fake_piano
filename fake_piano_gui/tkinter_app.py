@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import ttk, StringVar, filedialog
-from ttkthemes import ThemedTk
+#from ttkthemes import ThemedTk
+#class FakePiano(ThemedTk):
 
-class FakePiano(ThemedTk):
+class FakePiano(tk.Tk):
 
     CORRECT_COLOR = 'green4'
     ERROR_COLOR = 'red'
@@ -37,9 +38,9 @@ class FakePiano(ThemedTk):
         playback_tab = ttk.Frame(tab_control)
         midi_tab = ttk.Frame(tab_control)
         io_tab = ttk.Frame(tab_control)
-        tab_control.add(playback_tab, text='Playback')
-        tab_control.add(midi_tab, text='Midi')
-        tab_control.add(io_tab, text='Input/Output')
+        tab_control.add(playback_tab, text='{:^25}'.format('Playback'))
+        tab_control.add(midi_tab, text='{:^25}'.format('Midi'))
+        tab_control.add(io_tab, text='{:^25}'.format('Input/Output'))
         tab_control.pack(expand=True, fill="both")
         
         self.init_playback_tab(playback_tab)
@@ -71,10 +72,10 @@ class FakePiano(ThemedTk):
     def init_midi_tab(self, tab):
         # Create components
         #   Labels
-        lbl1 = ttk.Label(tab, text='MIDI file')
-        lbl2 = ttk.Label(tab, text='Read threshold (ms)')
-        lbl3 = ttk.Label(tab, text='Melody track')
-        lbl4 = ttk.Label(tab, text='Accomp. track')
+        lbl1 = ttk.Label(tab, text='MIDI file', anchor="w")
+        lbl2 = ttk.Label(tab, text='Melody track', anchor="w")
+        lbl3 = ttk.Label(tab, text='Accomp. track', anchor="w")
+        lbl4 = ttk.Label(tab, text='Read threshold (ms)', anchor="w")
 
         #   Midi file
         self.midi_file = StringVar()
@@ -97,18 +98,19 @@ class FakePiano(ThemedTk):
         load_btn = ttk.Button(tab, text='Load', command=self.load_midi)
 
         # Place components in the frame
-        lbl1.grid(row=0, column=0)
-        lbl2.grid(row=1, column=0)
-        lbl3.grid(row=2, column=0)
-        lbl4.grid(row=3, column=0)
+        lbl1.grid(row=0, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
+        lbl2.grid(row=1, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
+        lbl3.grid(row=2, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
+        lbl4.grid(row=3, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
 
-        midi_entry.grid(row=0, column=1)
-        read_threshold_entry.grid(row=1, column=1)
-        melody_track_combo.grid(row=2, column=1)
-        accomp_track_combo.grid(row=3, column=1)
+        midi_entry.grid(row=0, column=1, sticky="ew")
+        read_threshold_entry.grid(row=3, column=1, sticky="ew")
+        melody_track_combo.grid(row=1, column=1, sticky="ew")
+        accomp_track_combo.grid(row=2, column=1, sticky="ew")
 
-        browse_btn.grid(row=0, column=2)
-        load_btn.grid(row=3, column=2)
+        browse_btn.grid(row=0, column=2, padx=(10,10), pady=(5,5))
+        load_btn.grid(row=3, column=2, padx=(10,10), pady=(5,5))
+
         tab.columnconfigure(0, weight=0)
         tab.columnconfigure(1, weight=1)
 
