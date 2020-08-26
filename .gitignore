@@ -1,15 +1,17 @@
-#Logs, temps and info
+# Logs, temps and info
 *.txt
 *.log
 *.temp
 *test*.*
 *.json
 *.dll
-#Internal use
+# Config files
+*.ini
+# Internal use
 virtual*/
 data/
 tests/
 docs/
 examples/
-#Temp
+# Temp
 __pycache__/
