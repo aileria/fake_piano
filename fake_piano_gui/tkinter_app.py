@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, StringVar, filedialog
+from tkinter import ttk, filedialog
 #from ttkthemes import ThemedTk
 #class FakePiano(ThemedTk):
 
@@ -16,6 +16,8 @@ class FakePiano(tk.Tk):
         self.title(self.WINDOW_TITLE)
         self.geometry(self.DEFAULT_SIZE)
         #self.resizable(False, False)
+
+        # TODO Read config file
 
         # Attributes
         self.midi_file = None
@@ -55,19 +57,31 @@ class FakePiano(tk.Tk):
         undo_btn = ttk.Button(tab, text='Undo', command=self.undo)
         
         #   Input threshold
-        threshold_lbl = ttk.Label(tab, text='Input threshold (ms)')
-        input_threshold = StringVar()
+        input_threshold_lbl = ttk.Label(tab, text='Input threshold (ms)', anchor="w")
+        input_threshold = tk.StringVar()
         input_threshold.set(0)
         input_threshold_entry = tk.Entry(tab, textvariable=input_threshold)
-        input_threshold.trace('w', lambda name, index, mode, string_var=input_threshold: 
-            self.change_threshold(self.input_threshold, string_var.get(), input_threshold_entry))
+        input_threshold.trace('w', lambda name, index, mode: 
+            self.change_threshold(self.input_threshold, input_threshold.get(), input_threshold_entry))
+
+        #   Breakpoint key
+        breakpoint_key_lbl = ttk.Label(tab, text='Breakpoint key', anchor="w")
+        breakpoint_key = tk.StringVar()
+        breakpoint_key.set(0)
+        breakpoint_key_entry = tk.Entry(tab, textvariable=breakpoint_key)
+        breakpoint_key.trace('w', lambda name, index, mode: 
+            self.change_breakpoint_key(breakpoint_key.get(), breakpoint_key_entry))
 
         # Place components in the frame
         start_btn.grid(row=0, column=0)
         stop_btn.grid(row=0, column=1)
         undo_btn.grid(row=0, column=2)
-        threshold_lbl.grid(row=1, column=0)
-        input_threshold_entry.grid(row=1, column=1)
+        input_threshold_lbl.grid(row=1, column=0, padx=(10,5), pady=(5,5), sticky="w")
+        input_threshold_entry.grid(row=1, column=1, sticky="ew")
+        breakpoint_key_lbl.grid(row=2, column=0, padx=(10,5), pady=(5,5), sticky="w")
+        breakpoint_key_entry.grid(row=2, column=1, sticky="ew")
+
+        tab.columnconfigure(1, weight=1)
 
     def init_midi_tab(self, tab):
         # Create components
@@ -78,15 +92,15 @@ class FakePiano(tk.Tk):
         lbl4 = ttk.Label(tab, text='Read threshold (ms)', anchor="w")
 
         #   Midi file
-        self.midi_file = StringVar()
+        self.midi_file = tk.StringVar()
         midi_entry = tk.Entry(tab, textvariable=self.midi_file)
 
         #   Read threshold
-        read_threshold = StringVar()
+        read_threshold = tk.StringVar()
         read_threshold.set(0)
         read_threshold_entry = tk.Entry(tab, textvariable=read_threshold)
-        read_threshold.trace('w', lambda name, index, mode, string_var=read_threshold: 
-            self.change_threshold(self.read_threshold, string_var.get(), read_threshold_entry))
+        read_threshold.trace('w', lambda name, index, mode: 
+            self.change_threshold(self.read_threshold, read_threshold.get(), read_threshold_entry))
             
         #   Tracks
         midi_tracks = ['left_hand', 'right_hand']
@@ -98,10 +112,10 @@ class FakePiano(tk.Tk):
         load_btn = ttk.Button(tab, text='Load', command=self.load_midi)
 
         # Place components in the frame
-        lbl1.grid(row=0, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
-        lbl2.grid(row=1, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
-        lbl3.grid(row=2, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
-        lbl4.grid(row=3, column=0, padx=(10,5), pady=(5,5), sticky=tk.W)
+        lbl1.grid(row=0, column=0, padx=(10,5), pady=(5,5), sticky="w")
+        lbl2.grid(row=1, column=0, padx=(10,5), pady=(5,5), sticky="w")
+        lbl3.grid(row=2, column=0, padx=(10,5), pady=(5,5), sticky="w")
+        lbl4.grid(row=3, column=0, padx=(10,5), pady=(5,5), sticky="w")
 
         midi_entry.grid(row=0, column=1, sticky="ew")
         read_threshold_entry.grid(row=3, column=1, sticky="ew")
@@ -124,46 +138,77 @@ class FakePiano(tk.Tk):
         self.output_listbox.config(activestyle='none')
         self.input_listbox.insert(0, 'Input1', 'Input2')
         self.output_listbox.insert(0, 'Output1', 'Output2', 'Output3')
+        # TODO set default selection
+        apply_btn = ttk.Button(tab, text='Apply', command= lambda: self.set_input_output(
+            self.input_listbox.get(self.input_listbox.curselection()),
+            self.output_listbox.get(self.output_listbox.curselection()))
+        )
 
         # Place components in the frame
         input_lbl.grid(row=0, column=0)
         output_lbl.grid(row=0, column=1)
-        self.input_listbox.grid(row=1, column=0, padx=(10,5), pady=(0,10), sticky="nsew")
-        self.output_listbox.grid(row=1, column=1, padx=(5,10), pady=(0,10), sticky="nsew")
+        self.input_listbox.grid(row=1, column=0, padx=(10,5), pady=(0,5), sticky="nsew")
+        self.output_listbox.grid(row=1, column=1, padx=(5,10), pady=(0,5), sticky="nsew")
+        apply_btn.grid(row=2, column=1, padx=(0,10), pady=(0,5), sticky="se")
+
         tab.columnconfigure(0, weight=1)
         tab.columnconfigure(1, weight=1)
         tab.rowconfigure(0, weight=0)
         tab.rowconfigure(1, weight=1)
 
+    # Playback functions
     def start(self): ...
     def stop(self): ...
     def undo(self): ...
+    def change_breakpoint_key(self, key, entry):
+        try:
+            key = int(key)
+            state = True
+            print(key)
+        except ValueError:
+            state = False
+        finally:
+            self.change_entry_state(entry, state)
     
+    # Midi functions
     def load_midi(self): ...
+    def browse_file(self):
+        self.midi_file = filedialog.askopenfilename(
+            initialdir = "/", 
+            title = "Select a MIDI file", 
+            filetypes = (("Midi files", "*.mid*"), 
+                         ("all files", "*.*"))
+        ) 
+
+    # Input/Output functions
+    def set_input_output(self, selected_input, selected_output): ...
+
+    # General functions
     def change_threshold(self, old, new, entry):
         try:
             new = float(new)
             if new < 0: raise ValueError
+            state = True
+            old = new
+        except ValueError:
+            state = False
+        finally:
+            self.change_entry_state(entry, state)
+    
+    def change_entry_state(self, entry, state: bool):
+        if state:
             entry.config(
                 highlightthickness=1,
                 highlightbackground=self.CORRECT_COLOR, 
                 highlightcolor=self.CORRECT_COLOR
             )
-            old = new
-        except ValueError:
+        else:
             entry.config(
                 highlightthickness=1, 
                 highlightbackground=self.ERROR_COLOR, 
                 highlightcolor=self.ERROR_COLOR
             )
 
-    def browse_file(self):
-        self.midi_file = filedialog.askopenfilename(initialdir = "/", 
-                                          title = "Select a MIDI file", 
-                                          filetypes = (("Midi files", 
-                                                        "*.mid*"), 
-                                                       ("all files", 
-                                                        "*.*"))) 
 
 if __name__=='__main__':
     app = FakePiano()
