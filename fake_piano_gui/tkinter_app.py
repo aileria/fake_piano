@@ -7,11 +7,7 @@ import io
 
 class FakePiano(tk.Tk):
 
-    CORRECT_COLOR = 'green4'
-    ERROR_COLOR = 'red'
-    TTK_THEME = 'vista'
     WINDOW_TITLE = 'FakePiano'
-    DEFAULT_SIZE = '500x300'
     CONFIG_FILE = 'config.ini'
 
     def __init__(self):
@@ -25,8 +21,10 @@ class FakePiano(tk.Tk):
         self.config = ConfigParser()
         self.config.read(self.CONFIG_FILE)
 
-        # Size
+        # General attributes
         self.geometry(self.config.get('GENERAL', 'size'))
+        self.valid_color = self.config.get('GENERAL', 'valid_color')
+        self.error_color = self.config.get('GENERAL', 'error_color')
 
         # Attributes
         self.midi_file = tk.StringVar()
@@ -225,14 +223,14 @@ class FakePiano(tk.Tk):
         if state:
             entry.config(
                 highlightthickness=1,
-                highlightbackground=self.CORRECT_COLOR, 
-                highlightcolor=self.CORRECT_COLOR
+                highlightbackground=self.valid_color, 
+                highlightcolor=self.valid_color
             )
         else:
             entry.config(
                 highlightthickness=1, 
-                highlightbackground=self.ERROR_COLOR, 
-                highlightcolor=self.ERROR_COLOR
+                highlightbackground=self.error_color, 
+                highlightcolor=self.error_color
             )
     
     def on_closing(self):
