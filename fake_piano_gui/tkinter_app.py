@@ -76,9 +76,10 @@ class FakePiano(tk.Tk):
     def init_playback_tab(self, tab):
         # Create components
         #   Buttons
-        start_btn = ttk.Button(tab, text='Start', command=self.start)
-        stop_btn = ttk.Button(tab, text='Stop', command=self.stop)
-        undo_btn = ttk.Button(tab, text='Undo', command=self.undo)
+        buttons_frame = ttk.Frame(tab)
+        start_btn = ttk.Button(buttons_frame, text='Start', command=self.start)
+        stop_btn = ttk.Button(buttons_frame, text='Stop', command=self.stop)
+        undo_btn = ttk.Button(buttons_frame, text='Undo', command=self.undo)
         
         #   Input threshold
         input_threshold_lbl = ttk.Label(tab, text='Input threshold (ms)', anchor='w')
@@ -96,10 +97,11 @@ class FakePiano(tk.Tk):
         start_btn.grid(row=0, column=0)
         stop_btn.grid(row=0, column=1)
         undo_btn.grid(row=0, column=2)
+        buttons_frame.grid(row=0, column=0, columnspan=3, pady=(15,10))
         input_threshold_lbl.grid(row=1, column=0, padx=(10,5), pady=(5,5), sticky='w')
-        input_threshold_entry.grid(row=1, column=1, sticky='ew')
+        input_threshold_entry.grid(row=1, column=1, sticky='ew', padx=(0,15))
         breakpoint_key_lbl.grid(row=2, column=0, padx=(10,5), pady=(5,5), sticky='w')
-        breakpoint_key_entry.grid(row=2, column=1, sticky='ew')
+        breakpoint_key_entry.grid(row=2, column=1, sticky='ew', padx=(0,15))
 
         tab.columnconfigure(1, weight=1)
 
@@ -186,7 +188,7 @@ class FakePiano(tk.Tk):
         try:
             key = int(key)
             state = True
-            print(key)
+            self.breakpoint_key.set(key)
         except ValueError:
             state = False
         finally:
