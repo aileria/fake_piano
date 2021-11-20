@@ -30,7 +30,7 @@ class FakePianoConsole():
         player = fake_piano.FixedSpeedPlayer(playback_speed=1)
         reader = fake_piano.Reader(read_threshold=0.02)
         print('Midi file name:', end=' ')
-        reader.load_midi('data/'+input()+'.mid')
+        reader.load_midi('midi/'+input()+'.mid')
         print('----- Midi tracks -----')
         print(*reader.available_midi_tracks(), sep='\n')
         print('-----------------------')
