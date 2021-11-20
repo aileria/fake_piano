@@ -9,6 +9,7 @@
 virtual*/
 env*/
 midi/
+sf2/
 tests/
 docs/
 examples/
