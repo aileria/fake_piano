@@ -40,7 +40,7 @@ class FakePianoConsole():
         reader.load_accomp(input())
         player.set_playable(reader.create_playable())
         player.set_input(fake_piano.input_tools.KeyboardInput())
-        player.set_output(fake_piano.output_tools.MidiPortOutput())
+        player.set_output(fake_piano.output_tools.FluidSynthOutput('./sf2/steinway.sf2'))
         player.start()
         print('\n+ Playing... Press CTRL+C to stop')
 
