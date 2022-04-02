@@ -1,40 +1,43 @@
 # fake_piano
-Interpreta piezas musicales en un piano digital sin saber como usarlo.
+Play any piece on the piano with no musical knowledge.
 
-Las notas tocadas en el piano serán sustituidas por las indicadas en un archivo MIDI antes de reproducirse, permitiendo interpretar la melodía original.
+The notes played on the piano will be replaced in realtime by those specified in a MIDI file previously configured, allowing you to playback the original melody pressing random keys.
 
-Aunque el programa ha sido pensado para usar un piano digital como dispositivo de entrada y un puerto MIDI como salida, es posible usar otros medios de entrada y de salida.
+Although the program has been designed to use a digital piano as input device and a MIDI port as output, it is possible to use any input or output providing its implementation.
 
-## Instalación
-### Requisitos mínimos
-Los scripts requieren *Pyton 3* para ejecutarse. Además son necesarios ciertos módulos y herramientas para su correcto funcionamiento.
+## Installation
+### Minimum requirements
+*Python3* is required to execute the scripts. Aditionally, you may need to install these tools for proper functioning.
 
-* [Mido](https://pypi.org/project/mido/) - Para trabajar con archivos MIDI
+* [Mido](https://pypi.org/project/mido/) - MIDI file and message handling
 ```
 pip install mido
 ```
-* [python-rtmidi](https://pypi.org/project/python-rtmidi/) - Para gestionar puertos MIDI
+* [python-rtmidi](https://pypi.org/project/python-rtmidi/) - Realtime MIDI input / output communication
 ```
 pip install python-rtmidi
 ```
 
-### Requisitos opcionales
-Es posible ampliar la funcionalidad en cuanto a dispositivos de entrada y salida posibles, aunque para ello puede ser necesario instalar módulos externos.
+### Optional requirements
+To extend compatibility with other input/output devices it may be necessary to install their corresponding third party drivers or libraries.
 
-* [pyFluidSynth](https://github.com/nwhitehead/pyfluidsynth) - Para usar como salida el sintetizador FluidSynth.
+* [pyFluidSynth](https://github.com/nwhitehead/pyfluidsynth) - Necessary for FluidSynthOutput to work.
 ```
 pip install pyFluidSynth
 ```
-* [pynput](https://pypi.org/project/pynput/) - Para usar como entrada el teclado del ordenador.
+* [pynput](https://pypi.org/project/pynput/) - Necessary for KeyboardOutput to work.
 ```
 pip install pynput
 ```
-* [pyPS4Controller](https://pypi.org/project/pyPS4Controller/) - Para usar como entrada un controlador DualShock 4.
+* [pyPS4Controller](https://pypi.org/project/pyPS4Controller/) - Necessary for DS4Input (DualShock 4) to work.
 ```
 pip install pyPS4Controller
 ```
 
-## Uso básico
-El programa consta de dos partes básicas, la lectura de los archivos MIDI y su reproducción. Las clases correspondientes a cada tarea principal son Reader y Player respectivamente.
-<br>El objeto Reader es usado para leer un archivo MIDI y crear un objeto (Playable) que Player es capaz de reproducir. 
-<br>El objeto Player se encarga de leer los mensajes enviados por el dispositivo de entrada elegido y modificarlos antes de enviarlos al dispositivo de salida.
+## Usage
+
+The program consists of two basic parts, the reading of MIDI files and their playback. The classes corresponding to each main task are Reader and Player respectively.
+
+The Reader object is used to read a MIDI file and create a Playable object which the Player is able to play.
+
+The Player object is responsible for reading the messages sent by the chosen input device and modifying them before sending them to the configured output device.
